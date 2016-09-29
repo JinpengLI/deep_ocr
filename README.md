@@ -49,7 +49,7 @@ http://cs231n.stanford.edu/reports/zyh_project.pdf
 https://www.docker.com/
 ```
 
-下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1kVxzlkF )，解压到本地硬盘，譬如到以下地方
+下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1kVxzlkF )，解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
 
 ```
 unzip deep_ocr_workspace.zip -d ~/
