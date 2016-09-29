@@ -60,6 +60,10 @@ unzip deep_ocr_workspace.zip -d ~/
 基于cpu
 =======
 
+```
+docker pull jinpengli/deep_ocr_cpu_docker:latest
+```
+
 启动 docker container
 
 ```
