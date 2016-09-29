@@ -67,7 +67,7 @@ docker pull jinpengli/deep_ocr_cpu_docker:latest
 启动 docker container
 
 ```
-docker run -ti --volume=~/deep_ocr_workspace:/workspace deep_ocr:cpu /bin/bash
+docker run -ti --volume=~/deep_ocr_workspace:/workspace jinpengli/deep_ocr_cpu_docker:latest /bin/bash
 ```
 
 volume用于mount到container里面，这样可以获取上面的识别结果。
