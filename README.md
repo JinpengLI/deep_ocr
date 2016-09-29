@@ -46,3 +46,37 @@ Deep Convolutional Network for Handwritten Chinese Character Recognition
 
 http://cs231n.stanford.edu/reports/zyh_project.pdf
 ```
+
+通过 Docker 安装
+------------------------
+
+先安装docker，以下教程在Ubuntu 14.04 通过测试
+
+```
+https://www.docker.com/
+```
+
+下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1kVxzlkF)，解压到本地硬盘，譬如到以下地方
+
+```
+unzip deep_ocr_workspace.zip -d ~/
+```
+
+这个zip包含deep_ocr所有需要数据文件（由于太大了，所以放百度云了）。所有数据到解压到 `~/deep_ocr_workspace`，你也可以把需要处理的数据放到这个文件夹。
+
+基于cpu
+=======
+
+启动 docker container
+
+```
+docker run -ti --volume=~/deep_ocr_workspace:/workspace deep_ocr:cpu /bin/bash
+```
+
+volume用于mount到container里面，这样可以获取上面的识别结果。
+
+```
+python /opt/deep_ocr/reco_chars.py
+```
+
+然后可以继续你们的开发。。。。加油。。。
