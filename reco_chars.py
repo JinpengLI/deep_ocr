@@ -287,13 +287,13 @@ if __name__ == "__main__":
     norm_width = 64
     norm_height = 64
 
-    base_dir = "/root/data/chongdata_caffe_cn_sim_digits_64_64"
+    base_dir = "/workspace/data/chongdata_caffe_cn_sim_digits_64_64"
     model_def = os.path.join(base_dir, "deploy_lenet_train_test.prototxt")
     model_weights = os.path.join(base_dir, "lenet_iter_50000.caffemodel")
     y_tag_json_path = os.path.join(base_dir, "y_tag.json")
     caffe_cls = CaffeCls(model_def, model_weights, y_tag_json_path)
 
-    test_image = "/root/workspace/caffe_ocr/test_data.png"
+    test_image = "/opt/deep_ocr/test_data.png"
 
     debug_dir = "/tmp/debug_dir"
     if debug_dir is not None:
