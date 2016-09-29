@@ -32,13 +32,6 @@ $ python reco_chars.py
 只会忽悠了
 ```
 
-
-项目需要下载已训练好的模型， reco_chars.py源代码中的 base_dir = "/root/data/chongdata_caffe_cn_sim_digits_64_64"。
-
-```
-https://pan.baidu.com/s/1qYld5N2
-```
-
 大家可以基于caffe训练自己的字体，系统基于这个文章开发单个字的识别：
 
 ```
