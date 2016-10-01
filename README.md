@@ -32,13 +32,6 @@ $ python reco_chars.py
 只会忽悠了
 ```
 
-
-项目需要下载已训练好的模型， reco_chars.py源代码中的 base_dir = "/root/data/chongdata_caffe_cn_sim_digits_64_64"。
-
-```
-https://pan.baidu.com/s/1qYld5N2
-```
-
 大家可以基于caffe训练自己的字体，系统基于这个文章开发单个字的识别：
 
 ```
@@ -46,3 +39,41 @@ Deep Convolutional Network for Handwritten Chinese Character Recognition
 
 http://cs231n.stanford.edu/reports/zyh_project.pdf
 ```
+
+通过 Docker 安装
+------------------------
+
+先安装docker，以下教程在Ubuntu 14.04 通过测试
+
+```
+https://www.docker.com/
+```
+
+下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1kVxzlkF )，解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
+
+```
+unzip deep_ocr_workspace.zip -d ~/
+```
+
+这个zip包含deep_ocr所有需要数据文件（由于太大了，所以放百度云了）。所有数据到解压到 `~/deep_ocr_workspace`，你也可以把需要处理的数据放到这个文件夹。
+
+基于cpu
+=======
+
+```
+docker pull jinpengli/deep_ocr_cpu_docker:latest
+```
+
+启动 docker container
+
+```
+docker run -ti --volume=~/deep_ocr_workspace:/workspace jinpengli/deep_ocr_cpu_docker:latest /bin/bash
+```
+
+volume用于mount到container里面，这样可以获取上面的识别结果。
+
+```
+python /opt/deep_ocr/reco_chars.py
+```
+
+然后可以继续你们的开发。。。。加油。。。
