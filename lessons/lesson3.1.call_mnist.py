@@ -72,7 +72,7 @@ if __name__ == "__main__":
     image_list = []
     for image_path in os.listdir(data_dir_path):
         if image_path.startswith("mnist"):
-            image = cv2.imread(image_path)
+            image = cv2.imread(image_path, 0)
             image = cv2.resize(image, (32, 32))
             image_list.append(image)
     images = np.asarray(image_list)
