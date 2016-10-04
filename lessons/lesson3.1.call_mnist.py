@@ -68,7 +68,7 @@ class CaffeCls(object):
 
 if __name__ == "__main__":
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    data_dir_path = os.path.join(dir_path, "..", "data")
+    data_dir_path = os.path.join(dir_path, "..", "data", "lesson3")
     image_list = []
     for image_path in os.listdir(data_dir_path):
         if image_path.startswith("mnist"):
