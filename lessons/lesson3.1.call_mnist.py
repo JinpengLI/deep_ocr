@@ -70,10 +70,11 @@ if __name__ == "__main__":
     dir_path = os.path.dirname(os.path.realpath(__file__))
     data_dir_path = os.path.join(dir_path, "..", "data", "lesson3")
     image_list = []
+    image_paths = []
     for image_path in os.listdir(data_dir_path):
         if image_path.startswith("mnist") and image_path.endswith(".png"):
+            image_paths.append(image_path)
             image = cv2.imread(os.path.join(data_dir_path, image_path), 0)
-   
             image = cv2.resize(image, (char_w, char_h), interpolation = cv2.INTER_CUBIC)
             image_list.append(image)
     images = np.asarray(image_list)
@@ -86,5 +87,6 @@ if __name__ == "__main__":
     cls = CaffeCls(path_model_def, model_weights, path_y_tag,
                    width=char_w, height=char_h)
     ret = cls.predict_cv2_imgs(images)
-    for i in ret:
-        print(i[0])
+    for i, item in enumerate(ret):
+        print(image_paths[i])
+        print(item[0])
