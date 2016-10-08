@@ -4,3 +4,6 @@
 [submodule "trained_models"]
 	path = trained_models
 	url = https://github.com/JinpengLI/deep_ocr_trained_models.git
+[submodule "data/fonts"]
+	path = data/fonts
+	url = https://github.com/JinpengLI/deep_ocr_fonts.git
