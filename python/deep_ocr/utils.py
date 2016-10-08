@@ -7,3 +7,4 @@ def trim_string(string_data):
     ### for string
     string_data = "".join(list(set(string_data)))
     return string_data
+

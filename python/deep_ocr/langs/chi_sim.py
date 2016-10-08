@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 
 from deep_ocr.utils import trim_string
 
@@ -147,6 +149,4 @@ data = u'''
 '''
 
 data = trim_string(data)
-
-
 
