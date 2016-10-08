@@ -57,7 +57,7 @@ if __name__ == "__main__":
     lang_chars = lang_chars_gen.do()
     font_check = FontCheck(lang_chars)
 
-    font_dir = "/root/workspace/deep_ocr_fonts"
+    font_dir = "/root/workspace/deep_ocr_fonts/chinese_fonts/"
     for font_name in os.listdir(font_dir):
         font_path = os.path.join(font_dir, font_name)
         print("font_path:", font_path)

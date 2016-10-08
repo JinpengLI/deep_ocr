@@ -13,8 +13,8 @@ import json
 import random
 import numpy as np
 import shutil
-from deep_ocr.langs.utils import get_lang_chars
-
+from deep_ocr.lang_aux import LangCharsGenerate
+from deep_ocr.lang_aux import FontCheck
 
 if __name__ == "__main__":
 
@@ -62,144 +62,21 @@ if __name__ == "__main__":
     if os.path.isdir(images_dir):
         shutil.rmtree(images_dir)
     os.makedirs(images_dir)
+    
+    lang_chars_gen = LangCharsGenerate(langs)
+    lang_chars = lang_chars_gen.do()
+    font_check = FontCheck(lang_chars)
 
-    path_train_list = os.path.join(out_caffe_dir, "train.txt")
-    path_test_list = os.path.join(out_caffe_dir, "test.txt")
+    verified_font_paths = []
+    ## search for file fonts
+    for font_name in os.listdir(font_dir):
+        path_font_file = os.path.join(font_dir, font_name)
+        if font_check.do(path_font_file):
+            verified_font_paths.append(path_font_file)
 
-
-
-
-    langs = options.langs
-    out_caffe_dir = os.path.expanduser(options.out_caffe_dir)
-    font_dir = os.path.expanduser(options.font_dir)
-    tmp_font_paths = os.listdir(font_dir)
-
-    width = int(options.width)
-    height = int(options.height)
-    need_crop = not options.no_crop
-    prefix = options.prefix
-    train_ratio = float(options.train_ratio)
-    margin = int(options.margin)
-
-    dest_train_dir = os.path.join(dest_dir, "train")
-    dest_test_dir = os.path.join(dest_dir, "test")
-
-    prefix_train_dir = os.path.join(prefix, "train")
-    prefix_test_dir = os.path.join(prefix, "test")
-
-    prefix_index_train_file = os.path.join(dest_dir, "train.txt")
-    prefix_index_test_file = os.path.join(dest_dir, "test.txt")
-
-    y_tag_json_file = os.path.join(dest_dir, "y_tag.json")
-    y_tag_text_file = os.path.join(dest_dir, "y_tag.txt")
-
-    if os.path.isdir(dest_dir):
-        shutil.rmtree(dest_dir)
-    if not os.path.isdir(dest_dir):
-        os.makedirs(dest_dir)
-    if not os.path.isdir(dest_train_dir):
-        os.makedirs(dest_train_dir)
-    if not os.path.isdir(dest_test_dir):
-        os.makedirs(dest_test_dir)
-
-    lang_chars = "".join(list(set(lang_chars)))
-
-    font_paths = []
-    for tmp_font_path in tmp_font_paths:
-        if tmp_font_path.lower().endswith(".ttf") or \
-                tmp_font_path.lower().endswith(".ttc"):
-            path_font = os.path.join(font_dir, tmp_font_path)
-            if os.path.isfile(path_font):
-                if check_if_good_font(lang_chars, path_font):
-                    font_paths.append(path_font)
-#                else:
-#                    os.remove(path_font)
-            else:
-                print("cannot find ", path_font)
-
-    print("=" * 60)
-    print("correct fonts:")
-    for path_font in font_paths:
-        print(path_font)
-
-    print("total chinese character number=", len(lang_chars))
-    print("font number=", len(font_paths))
-
-    train_index_list = []
-    test_index_list = []
-
-    max_train_i = int(train_ratio * len(font_paths))
-
-    y_to_tag = {}
-
-    for j, font_path in enumerate(font_paths):
-        train_or_test = "train"
-        if j >= max_train_i:
-            train_or_test = "test"
-        for i, char in enumerate(lang_chars):
-            if i not in y_to_tag:
-                y_to_tag[i] = char
-            prefix_char_dir = os.path.join(
-                train_or_test,
-                "{0}".format(i),
-                "{0}_{1}.jpg".format(j, os.path.basename(font_path)))
-            if train_or_test == "train":
-                train_index_list.append((prefix_char_dir, i))
-            else:
-                test_index_list.append((prefix_char_dir, i))
-            char_dir = os.path.join(dest_dir, train_or_test, "{0}".format(i))
-            if not os.path.isdir(char_dir):
-                os.makedirs(char_dir)
-            path_img = os.path.join(char_dir, "{0}_{1}.jpg".format(j,
-                                    os.path.basename(font_path)))
-            write_image(
-                path_img,
-                char,
-                font_path,
-                width, height,
-                need_crop,
-                margin)
-
-    h_y_tag_json_file = open(y_tag_json_file, "w+")
-    json.dump(y_to_tag, h_y_tag_json_file)
-
-    h_y_tag_text_file = open(y_tag_text_file, "w+")
-    for key in y_to_tag:
-        h_y_tag_text_file.write("%d %s\n" % (key, y_to_tag[key].encode("utf-8")))
-    h_y_tag_text_file.close()
-
-    fout = open(prefix_index_train_file, "w+")
-    for item in train_index_list:
-        fout.write("%s %d\n" % (item[0], item[1]))
-    fout.close()
-
-    fout = open(prefix_index_test_file, "w+")
-    for item in test_index_list:
-        fout.write("%s %d\n" % (item[0], item[1]))
-    fout.close()
-
-
-#    y_to_tag = {}
-#    path_y_to_tag = os.path.join(dest_dir, "y_to_tag.json")
-#    path_y_to_file = open(os.path.join(dest_dir, "y_to_tag.txt"), "w+")
-#    for i, char in enumerate(lang_chars):
-#        
-#        
-#        path_y_to_file.write("%d %s\n" % (i, char.encode("utf-8")))
-#        y_to_tag[i] = char
-#        char_dir = os.path.join(dest_dir, "{0}".format(i))
-#        if not os.path.isdir(char_dir):
-#            os.makedirs(char_dir)
-#        for j, font_path in enumerate(font_paths):
-#            path_img = os.path.join(char_dir, "{0}_{1}.jpg".format(j,
-#                                    os.path.basename(font_path)))
-#            write_image(
-#                path_img,
-#                char,
-#                font_path,
-#                width, height,
-#                need_crop)         
-#  
-#    path_y_to_file.close()
-#
-#    json.dump(y_to_tag, open(path_y_to_tag, "w+"))
+    
+    
+    
+    
+    
+    
