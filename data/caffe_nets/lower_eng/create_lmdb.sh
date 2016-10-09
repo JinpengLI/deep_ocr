@@ -3,6 +3,8 @@
 # N.B. set the path to the imagenet train + val data dirs
 
 EXAMPLE=/workspace/caffe_dataset_lmdb
+mkdir -p $EXAMPLE
+
 DATA=/workspace/caffe_dataset_lower_eng
 TOOLS=$CAFFE_ROOT/build/tools
 
