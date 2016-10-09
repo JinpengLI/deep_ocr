@@ -12,7 +12,7 @@ layer {
   }
   data_param {
     source: "/workspace/caffe_dataset_lower_eng/train_lmdb"
-    batch_size: 10
+    batch_size: 100
     backend: LMDB
   }
 }
@@ -29,7 +29,7 @@ layer {
   }
   data_param {
     source: "/workspace/caffe_dataset_lower_eng/val_lmdb"
-    batch_size: 10
+    batch_size: 100
     backend: LMDB
   }
 }
