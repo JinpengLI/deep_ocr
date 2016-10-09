@@ -2,7 +2,7 @@
 # Create the imagenet lmdb inputs
 # N.B. set the path to the imagenet train + val data dirs
 
-EXAMPLE=/workspace/caffe_dataset_lmdb
+EXAMPLE=/workspace/caffe_dataset_lower_eng_lmdb
 mkdir -p $EXAMPLE
 
 DATA=/workspace/caffe_dataset_lower_eng
@@ -37,9 +37,7 @@ if [ ! -d "$VAL_DATA_ROOT" ]; then
   exit 1
 fi
 
-
 echo "Creating train lmdb..."
-
 
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
@@ -49,7 +47,6 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     $TRAIN_DATA_ROOT \
     $DATA/train.txt \
     $EXAMPLE/train_lmdb
-
 
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
