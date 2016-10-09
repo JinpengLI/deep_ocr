@@ -2,10 +2,9 @@
 # Create the imagenet lmdb inputs
 # N.B. set the path to the imagenet train + val data dirs
 
-EXAMPLE=$DEEP_OCR_ROOT
-DATA=/workspace/caffe_dataset
+EXAMPLE=/workspace/caffe_dataset_lmdb
+DATA=/workspace/caffe_dataset_lower_eng
 TOOLS=$CAFFE_ROOT/build/tools
-
 
 TRAIN_DATA_ROOT=/workspace/caffe_dataset/
 VAL_DATA_ROOT=/workspace/caffe_dataset/
@@ -48,4 +47,16 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     $TRAIN_DATA_ROOT \
     $DATA/train.txt \
     $EXAMPLE/train_lmdb
+
+
+GLOG_logtostderr=1 $TOOLS/convert_imageset \
+    --resize_height=$RESIZE_HEIGHT \
+    --resize_width=$RESIZE_WIDTH \
+    --shuffle \
+    --gray \
+    $VAL_DATA_ROOT \
+    $DATA/test.txt \
+    $EXAMPLE/val_lmdb
+
+echo "Done."
 
