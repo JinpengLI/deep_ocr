@@ -24,7 +24,7 @@ if __name__ == "__main__":
     description = '''
         deep_ocr_make_caffe_dataset --out_caffe_dir /root/data/caffe_dataset \
             --font_dir /root/workspace/deep_ocr_fonts/chinese_fonts \
-            --width 30 --height 30 --margin 4 --langs digits
+            --width 30 --height 30 --margin 4 --langs lower_eng
     '''
 
     parser = argparse.ArgumentParser(
