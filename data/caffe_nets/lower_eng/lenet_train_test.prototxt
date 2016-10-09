@@ -11,8 +11,8 @@ layer {
     scale: 0.00390625
   }
   data_param {
-    source: "/workspace/caffe_dataset_lmdb/train_lmdb"
-    batch_size: 64
+    source: "/workspace/caffe_dataset_lower_eng/train_lmdb"
+    batch_size: 10
     backend: LMDB
   }
 }
@@ -28,8 +28,8 @@ layer {
     scale: 0.00390625
   }
   data_param {
-    source: "/workspace/caffe_dataset_lmdb/val_lmdb"
-    batch_size: 100
+    source: "/workspace/caffe_dataset_lower_eng/val_lmdb"
+    batch_size: 10
     backend: LMDB
   }
 }
@@ -166,4 +166,3 @@ layer {
   bottom: "label"
   top: "loss"
 }
-

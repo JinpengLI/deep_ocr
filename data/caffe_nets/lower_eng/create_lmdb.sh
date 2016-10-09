@@ -2,7 +2,7 @@
 # Create the imagenet lmdb inputs
 # N.B. set the path to the imagenet train + val data dirs
 
-EXAMPLE=/workspace/caffe_dataset_lower_eng_lmdb
+EXAMPLE=/workspace/caffe_dataset_lower_eng
 mkdir -p $EXAMPLE
 
 DATA=/workspace/caffe_dataset_lower_eng
@@ -13,7 +13,7 @@ VAL_DATA_ROOT=/workspace/caffe_dataset/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
-RESIZE=false
+RESIZE=true
 if $RESIZE; then
   RESIZE_HEIGHT=28
   RESIZE_WIDTH=28
