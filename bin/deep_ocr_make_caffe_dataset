@@ -100,8 +100,8 @@ if __name__ == "__main__":
         if i >= max_train_i:
             is_train = False
         for j, char in enumerate(lang_chars):
-            if i not in y_to_tag:
-                y_to_tag[i] = char
+            if j not in y_to_tag:
+                y_to_tag[j] = char
             char_dir = os.path.join(images_dir, "%d" % j)
             if not os.path.isdir(char_dir):
                 os.makedirs(char_dir)
