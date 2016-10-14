@@ -1,6 +1,6 @@
->>> from sklearn import datasets
->>> digits = datasets.load_digits()
->>> print digits.data.shape
+from sklearn import datasets
+digits = datasets.load_digits()
+print digits.data.shape
 digits.images[0]
 
 digits.target

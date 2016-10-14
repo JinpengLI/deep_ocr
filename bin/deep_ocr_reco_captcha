@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+
+import argparse
+from argparse import RawTextHelpFormatter
+import os
+import shutil
+import cv2
+
+from deep_ocr.captcha.char_segmentation import CharSegmentation
+
+
+if __name__ == "__main__":
+
+    description = '''
+        deep_ocr_reco_captcha --captcha_img /root/workspace/deep_ocr/data/captcha/captcha.png \
+            --num_char 5 \
+            --caffe_model /root/data/deep_ocr_trained_models/mnist_model/lenet_iter_10000.caffemodel \
+            --caffe_network /root/data/deep_ocr_trained_models/mnist_model/lenet.prototxt \
+            --y_tag /root/data/deep_ocr_trained_models/mnist_model/deep_ocr_network.y_tag.json \
+            --debug_path /tmp/debug_captcha
+    '''
+
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--captcha_img', dest='captcha_img',
+                        default=None, required=True,
+                        help='captcha image to reco')
+    parser.add_argument('--num_char', dest='num_char',
+                        default=None, required=True,
+                        help='m_char')
+    parser.add_argument('--caffe_model', dest='caffe_model',
+                        default=None, required=True,
+                        help='trained caffe model')
+    parser.add_argument('--caffe_network', dest='caffe_network',
+                        default=None, required=True,
+                        help='caffe network')
+    parser.add_argument('--y_tag', dest='y_tag',
+                        default=None, required=True,
+                        help='y_tag')
+    parser.add_argument('--debug_path', dest='debug_path',
+                        default=None, required=False,
+                        help='debug path')
+    options = parser.parse_args()
+
+    captcha_img = os.path.expanduser(options.captcha_img)
+    num_char = int(options.num_char)
+    caffe_model = os.path.expanduser(options.caffe_model)
+    caffe_network = os.path.expanduser(options.caffe_network)
+    y_tag = os.path.expanduser(options.y_tag)
+
+    debug_path = None
+    if options.debug_path is not None:
+        debug_path = os.path.expanduser(options.debug_path)
+        if os.path.isdir(debug_path):
+            shutil.rmtree(debug_path)
+        os.makedirs(debug_path)
+
+    image = cv2.imread(captcha_img)
+    char_segmentation = CharSegmentation(
+        num_char=num_char,
+        debug_path=debug_path)
+    char_segmentation.do(image)
+
+
+
