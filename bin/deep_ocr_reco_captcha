@@ -11,6 +11,9 @@ import shutil
 import cv2
 
 from deep_ocr.captcha.char_segmentation import CharSegmentation
+from deep_ocr.captcha.search_best_segmentation import SearchBestSegmentation
+from deep_ocr.caffe_clf import CaffeCls
+from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatio
 
 
 if __name__ == "__main__":
@@ -21,6 +24,15 @@ if __name__ == "__main__":
             --caffe_model /root/data/deep_ocr_trained_models/mnist_model/lenet_iter_10000.caffemodel \
             --caffe_network /root/data/deep_ocr_trained_models/mnist_model/lenet.prototxt \
             --y_tag /root/data/deep_ocr_trained_models/mnist_model/deep_ocr_network.y_tag.json \
+            --caffe_img_w 28 --caffe_img_h 28 \
+            --debug_path /tmp/debug_captcha
+        
+        deep_ocr_reco_captcha --captcha_img /root/workspace/deep_ocr/data/captcha/simple.png \
+            --num_char 5 \
+            --caffe_model /root/data/deep_ocr_trained_models/mnist_model/lenet_iter_10000.caffemodel \
+            --caffe_network /root/data/deep_ocr_trained_models/mnist_model/lenet.prototxt \
+            --y_tag /root/data/deep_ocr_trained_models/mnist_model/deep_ocr_network.y_tag.json \
+            --caffe_img_w 28 --caffe_img_h 28 \
             --debug_path /tmp/debug_captcha
     '''
 
@@ -41,6 +53,12 @@ if __name__ == "__main__":
     parser.add_argument('--y_tag', dest='y_tag',
                         default=None, required=True,
                         help='y_tag')
+    parser.add_argument('--caffe_img_w', dest='caffe_img_w',
+                        default=None, required=True,
+                        help='caffe_img_w')
+    parser.add_argument('--caffe_img_h', dest='caffe_img_h',
+                        default=None, required=True,
+                        help='caffe_img_h')
     parser.add_argument('--debug_path', dest='debug_path',
                         default=None, required=False,
                         help='debug path')
@@ -51,6 +69,10 @@ if __name__ == "__main__":
     caffe_model = os.path.expanduser(options.caffe_model)
     caffe_network = os.path.expanduser(options.caffe_network)
     y_tag = os.path.expanduser(options.y_tag)
+    caffe_img_w = int(options.caffe_img_w)
+    caffe_img_h = int(options.caffe_img_h)
+    norm_width = 200
+    norm_height = 200
 
     debug_path = None
     if options.debug_path is not None:
@@ -60,10 +82,20 @@ if __name__ == "__main__":
         os.makedirs(debug_path)
 
     image = cv2.imread(captcha_img)
+    
+    proc_keep_ratio = PreprocessResizeKeepRatio(
+        width=norm_width, height=norm_height)
+    image = proc_keep_ratio.do(image)
+
     char_segmentation = CharSegmentation(
         num_char=num_char,
         debug_path=debug_path)
-    char_segmentation.do(image)
+    segmentations = char_segmentation.do(image)
 
+    caffe_cls = CaffeCls(caffe_network, caffe_model, y_tag,
+                         width=caffe_img_w, height=caffe_img_h)
 
-
+    search_best_segmentation = SearchBestSegmentation(
+        caffe_cls, char_segmentation.bin_img,
+        debug_path)
+    search_best_segmentation.do(segmentations)
