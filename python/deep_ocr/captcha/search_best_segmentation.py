@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatioFillBG
+from deep_ocr.cv2_img_proc import PreprocessCropZeros
+
 import numpy as np
 import os
 import cv2
@@ -20,10 +22,14 @@ class SearchBestSegmentation(object):
         char_w = self.cls.width
         char_h = self.cls.height
         proc_resize = PreprocessResizeKeepRatioFillBG(
-            width=char_w, height=char_h)
+            width=char_w, height=char_h,
+            auto_avoid_fill_bg=False,
+            fill_bg=True, margin=2)
+        crop_zeros = PreprocessCropZeros()
         sub_imgs = []
         for rect in segmentation:
             sub_img = self._extract_sub_img(cv2_img, rect)
+            sub_img = crop_zeros.do(sub_img)
             sub_imgs.append(proc_resize.do(sub_img))
         return np.asarray(sub_imgs)/255.0
 
@@ -66,4 +72,4 @@ class SearchBestSegmentation(object):
 #            print("tags=", tags)
             eval_segmentations.append((tags, accumulate_proba))
         eval_segmentations = sorted(eval_segmentations, key=lambda x:x[1], reverse=True)
-        print(eval_segmentations[0])
+        return eval_segmentations

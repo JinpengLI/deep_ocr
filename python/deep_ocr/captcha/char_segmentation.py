@@ -92,7 +92,7 @@ class CharSegmentation(object):
         self.bin_img = adaptive_threshold
 
         nonzero_curve = self.find_lowest_nonzero_curve(adaptive_threshold)
-        nonzero_curve = savgol_filter(nonzero_curve, 31, 2)
+        nonzero_curve = savgol_filter(nonzero_curve, 15, 2)
         min_points = argrelextrema(nonzero_curve, np.greater)
         min_points = min_points[0]
         min_points = [i for i in min_points]

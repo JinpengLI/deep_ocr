@@ -4,6 +4,49 @@ import cv2
 import numpy as np
 
 
+
+class PreprocessCropZeros(object):
+
+    def __init__(self):
+        pass
+
+    def do(self, cv2_gray_img):
+        height = cv2_gray_img.shape[0]
+        width = cv2_gray_img.shape[1]
+
+        v_sum = np.sum(cv2_gray_img, axis=0)
+        h_sum = np.sum(cv2_gray_img, axis=1)
+        left = 0
+        right = width - 1
+        top = 0
+        low = height - 1
+
+        for i in range(width):
+            if v_sum[i] > 0:
+                left = i
+                break
+
+        for i in range(width - 1, -1, -1):
+            if v_sum[i] > 0:
+                right = i
+                break
+
+        for i in range(height):
+            if h_sum[i] > 0:
+                top = i
+                break
+
+        for i in range(height - 1, -1, -1):
+            if h_sum[i] > 0:
+                low = i
+                break
+        if not (top < low and right > left):
+            return cv2_gray_img
+
+        return cv2_gray_img[top: low+1, left: right+1]
+
+
+
 class FindImageBBox(object):
     def __init__(self, ):
         pass

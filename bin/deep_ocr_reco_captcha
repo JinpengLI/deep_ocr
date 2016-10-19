@@ -98,4 +98,10 @@ if __name__ == "__main__":
     search_best_segmentation = SearchBestSegmentation(
         caffe_cls, char_segmentation.bin_img,
         debug_path)
-    search_best_segmentation.do(segmentations)
+    eval_segmentations = search_best_segmentation.do(segmentations)
+
+    n_top = 10
+    for i, eval_segmentation in enumerate(eval_segmentations):
+        if i > n_top:
+            break
+        print(eval_segmentation)
