@@ -82,7 +82,7 @@ if __name__ == "__main__":
         os.makedirs(debug_path)
 
     image = cv2.imread(captcha_img)
-    
+
     proc_keep_ratio = PreprocessResizeKeepRatio(
         width=norm_width, height=norm_height)
     image = proc_keep_ratio.do(image)
