@@ -4,8 +4,10 @@
 
 
 EXAMPLE=/workspace/caffe_dataset_lower_eng
-rm -rf $EXAMPLE
 mkdir -p $EXAMPLE
+rm -rf $EXAMPLE/train_lmdb
+rm -rf $EXAMPLE/val_lmdb
+
 
 DATA=/workspace/caffe_dataset_lower_eng
 TOOLS=$CAFFE_ROOT/build/tools
