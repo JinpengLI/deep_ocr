@@ -15,9 +15,9 @@ class CharSegmentation(object):
         self.bin_img = None
 
     def find_lowest_nonzero_curve(self, bin_img):
-        cv2.imshow('bin_img', bin_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        #cv2.imshow('bin_img', bin_img)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
         height, width = bin_img.shape
         nonzero_curve = []
         for i in range(width):
