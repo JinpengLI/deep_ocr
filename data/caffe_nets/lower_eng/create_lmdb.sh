@@ -2,7 +2,9 @@
 # Create the imagenet lmdb inputs
 # N.B. set the path to the imagenet train + val data dirs
 
+
 EXAMPLE=/workspace/caffe_dataset_lower_eng
+rm -rf $EXAMPLE
 mkdir -p $EXAMPLE
 
 DATA=/workspace/caffe_dataset_lower_eng
