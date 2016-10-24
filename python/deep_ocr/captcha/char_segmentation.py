@@ -135,8 +135,8 @@ class CharSegmentation(object):
             cv2.imwrite(path_adaptive_threshold, adaptive_threshold)
 
             min_point_vals = [nonzero_curve[i] for i in min_points]
-            plt.plot(range(nonzero_curve.shape[0]), nonzero_curve)
-            plt.plot(min_points, min_point_vals, 'ro')
-            plt.gca().invert_yaxis()
-            plt.show()
+            #plt.plot(range(nonzero_curve.shape[0]), nonzero_curve)
+            #plt.plot(min_points, min_point_vals, 'ro')
+            #plt.gca().invert_yaxis()
+            #plt.show()
         return segmentations
