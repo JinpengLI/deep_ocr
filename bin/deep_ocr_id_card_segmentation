@@ -1,0 +1,63 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+
+import argparse
+from argparse import RawTextHelpFormatter
+import os
+import shutil
+import cv2
+
+
+from deep_ocr.cv2_img_proc import PreprocessBackgroundMask
+
+
+if __name__ == "__main__":
+
+    description = '''
+        # Docker config
+        CAFFE_MODEL=/opt/deep_ocr/data/trained_models/mnist_model
+        DEEP_OCR_ROOT=/opt/deep_ocr
+
+        # PC
+        CAFFE_MODEL=/root/data/deep_ocr_trained_models/mnist_model
+        DEEP_OCR_ROOT=/root/workspace/deep_ocr
+
+        deep_ocr_id_card_segmentation --img $DEEP_OCR_ROOT/data/id_card_img.jpg \
+            --debug_path /tmp/debug
+    '''
+
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--img', dest='img',
+                        default=None, required=True,
+                        help='id card image to reco')
+    parser.add_argument('--debug_path', dest='debug_path',
+                        default=None, required=False,
+                        help='debug path')
+    options = parser.parse_args()
+
+    path_img = os.path.expanduser(options.img)
+    debug_path = os.path.expanduser(options.debug_path)
+    id_card_img = cv2.imread(path_img)
+    gray_id_card_img = cv2.cvtColor(id_card_img, cv2.COLOR_BGR2GRAY)
+    gray_id_card_img = 255 - gray_id_card_img
+    
+    boundary = ([0, 0, 0], [50, 50, 50])
+    preprocess_bg_mask = PreprocessBackgroundMask(boundary)
+    id_card_img_mask = preprocess_bg_mask.do(id_card_img)
+    img_gray_texts = cv2.bitwise_and(gray_id_card_img,
+                                     gray_id_card_img,
+                                     mask=id_card_img_mask)
+    
+    if debug_path is not None:
+        if os.path.isdir(debug_path):
+            shutil.rmtree(debug_path)
+        os.makedirs(debug_path)
+        debug_image_path = os.path.join(debug_path, "origin_img.jpg")
+        debug_image_gray_texts_path = os.path.join(debug_path, "gray_texts.jpg")
+        cv2.imwrite(debug_image_path, id_card_img)
+        cv2.imwrite(debug_image_gray_texts_path, img_gray_texts)
+        

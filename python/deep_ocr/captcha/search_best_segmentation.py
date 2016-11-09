@@ -59,6 +59,11 @@ class SearchBestSegmentation(object):
             f_stat_path.write("%f" % accumulate_proba)
             f_stat_path.write("\n")
             f_stat_path.close()
+            sub_imgs_dir_pic = sub_imgs_dir + ".jpg"
+            cv2_img_copy = np.copy(cv2_img)
+            for one_segmentation in segmentation:
+                left_x = one_segmentation[0]
+                cv2.line(cv2_img_copy, (), )
         return accumulate_proba, tags
 
 

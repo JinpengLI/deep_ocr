@@ -19,21 +19,30 @@ from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatio
 if __name__ == "__main__":
 
     description = '''
-        deep_ocr_reco_captcha --captcha_img /root/workspace/deep_ocr/data/captcha/captcha.png \
-            --num_char 5 \
-            --caffe_model /root/data/deep_ocr_trained_models/mnist_model/lenet_iter_10000.caffemodel \
-            --caffe_network /root/data/deep_ocr_trained_models/mnist_model/lenet.prototxt \
-            --y_tag /root/data/deep_ocr_trained_models/mnist_model/deep_ocr_network.y_tag.json \
-            --caffe_img_w 28 --caffe_img_h 28 \
-            --debug_path /tmp/debug_captcha
+        # Docker config
+        CAFFE_MODEL=/opt/deep_ocr/data/trained_models/mnist_model
+        DEEP_OCR_ROOT=/opt/deep_ocr
         
-        deep_ocr_reco_captcha --captcha_img /root/workspace/deep_ocr/data/captcha/simple.png \
+        # PC
+        CAFFE_MODEL=/root/data/deep_ocr_trained_models/mnist_model
+        DEEP_OCR_ROOT=/root/workspace/deep_ocr
+
+        deep_ocr_reco_captcha --captcha_img $DEEP_OCR_ROOT/data/captcha/captcha.png \
             --num_char 5 \
-            --caffe_model /root/data/deep_ocr_trained_models/mnist_model/lenet_iter_10000.caffemodel \
-            --caffe_network /root/data/deep_ocr_trained_models/mnist_model/lenet.prototxt \
-            --y_tag /root/data/deep_ocr_trained_models/mnist_model/deep_ocr_network.y_tag.json \
+            --caffe_model $CAFFE_MODEL/lenet_iter_10000.caffemodel \
+            --caffe_network $CAFFE_MODEL/lenet.prototxt \
+            --y_tag $CAFFE_MODEL/deep_ocr_network.y_tag.json \
             --caffe_img_w 28 --caffe_img_h 28 \
             --debug_path /tmp/debug_captcha
+
+        deep_ocr_reco_captcha --captcha_img $DEEP_OCR_ROOT/data/captcha/simple.png \
+            --num_char 5 \
+            --caffe_model $CAFFE_MODEL/lenet_iter_10000.caffemodel \
+            --caffe_network $CAFFE_MODEL/lenet.prototxt \
+            --y_tag $CAFFE_MODEL/deep_ocr_network.y_tag.json \
+            --caffe_img_w 28 --caffe_img_h 28 \
+            --debug_path /tmp/debug_captcha
+
     '''
 
     parser = argparse.ArgumentParser(
@@ -100,7 +109,7 @@ if __name__ == "__main__":
         debug_path)
     eval_segmentations = search_best_segmentation.do(segmentations)
 
-    n_top = 10
+    n_top = 100
     for i, eval_segmentation in enumerate(eval_segmentations):
         if i > n_top:
             break

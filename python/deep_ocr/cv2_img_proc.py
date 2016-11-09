@@ -4,6 +4,18 @@ import cv2
 import numpy as np
 
 
+class PreprocessBackgroundMask():
+    
+    def __init__(self, boundary):
+        self.boundary = boundary
+
+    def do(self, image):
+        (lower, upper) = self.boundary
+        lower = np.array(lower, dtype = "uint8")
+        upper = np.array(upper, dtype = "uint8")
+        mask = cv2.inRange(image, lower, upper)
+        return mask
+
 
 class PreprocessCropZeros(object):
 
