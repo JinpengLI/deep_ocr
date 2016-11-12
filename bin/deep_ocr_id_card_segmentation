@@ -9,9 +9,17 @@ from argparse import RawTextHelpFormatter
 import os
 import shutil
 import cv2
+import numpy as np
 
+from deep_ocr.utils import extract_peek_ranges_from_array
+from deep_ocr.utils import median_split_ranges
+from deep_ocr.utils import merge_chars_into_line_segments
 
 from deep_ocr.cv2_img_proc import PreprocessBackgroundMask
+from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatio
+
+from deep_ocr.id_cards.segmentation import Segmentation
+
 
 
 if __name__ == "__main__":
@@ -27,6 +35,9 @@ if __name__ == "__main__":
 
         deep_ocr_id_card_segmentation --img $DEEP_OCR_ROOT/data/id_card_img.jpg \
             --debug_path /tmp/debug
+
+        deep_ocr_id_card_segmentation --img ~/data/id_card_front \
+            --debug_path /tmp/debug
     '''
 
     parser = argparse.ArgumentParser(
@@ -41,23 +52,30 @@ if __name__ == "__main__":
 
     path_img = os.path.expanduser(options.img)
     debug_path = os.path.expanduser(options.debug_path)
-    id_card_img = cv2.imread(path_img)
-    gray_id_card_img = cv2.cvtColor(id_card_img, cv2.COLOR_BGR2GRAY)
-    gray_id_card_img = 255 - gray_id_card_img
-    
-    boundary = ([0, 0, 0], [50, 50, 50])
-    preprocess_bg_mask = PreprocessBackgroundMask(boundary)
-    id_card_img_mask = preprocess_bg_mask.do(id_card_img)
-    img_gray_texts = cv2.bitwise_and(gray_id_card_img,
-                                     gray_id_card_img,
-                                     mask=id_card_img_mask)
-    
     if debug_path is not None:
         if os.path.isdir(debug_path):
             shutil.rmtree(debug_path)
         os.makedirs(debug_path)
-        debug_image_path = os.path.join(debug_path, "origin_img.jpg")
-        debug_image_gray_texts_path = os.path.join(debug_path, "gray_texts.jpg")
-        cv2.imwrite(debug_image_path, id_card_img)
-        cv2.imwrite(debug_image_gray_texts_path, img_gray_texts)
-        
+    norm_width = 600
+    norm_height = 600
+
+    if os.path.isfile(path_img):
+        id_card_img = cv2.imread(path_img)
+        preprocess_resize = PreprocessResizeKeepRatio(norm_width, norm_height)
+        id_card_img = preprocess_resize.do(id_card_img)    
+        segmentation = Segmentation(debug_path)
+        segmentation.do(id_card_img)
+    elif os.path.isdir(path_img):
+        filenames = os.listdir(path_img)
+        for filename in filenames:
+            if filename.lower().endswith(".jpg"):
+                print("process filename=", filename)
+                debug_path_filename = None
+                if debug_path is not None:
+                    debug_path_filename = os.path.join(debug_path, filename)
+                each_path_img = os.path.join(path_img, filename)
+                id_card_img = cv2.imread(each_path_img)
+                preprocess_resize = PreprocessResizeKeepRatio(norm_width, norm_height)
+                id_card_img = preprocess_resize.do(id_card_img)    
+                segmentation = Segmentation(debug_path_filename)
+                segmentation.do(id_card_img)
