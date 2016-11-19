@@ -2,6 +2,8 @@
 
 import cv2
 from deep_ocr.cv2_img_proc import PreprocessBackgroundMask
+from deep_ocr.cv2_img_proc import PreprocessRemoveNonCharNoise
+
 import numpy as np
 from deep_ocr.utils import extract_peek_ranges_from_array
 from deep_ocr.utils import merge_chars_into_line_segments
@@ -21,12 +23,22 @@ class Segmentation(object):
 
     def check_if_good_boundary(self, boundary, norm_height, norm_width, color_img):
         preprocess_bg_mask = PreprocessBackgroundMask(boundary)
+        char_w = norm_width / 20
+        remove_noise = PreprocessRemoveNonCharNoise(char_w)
+
         id_card_img_mask = preprocess_bg_mask.do(color_img)
         id_card_img_mask[0:int(norm_height*0.05),:] = 0
         id_card_img_mask[int(norm_height*0.95): ,:] = 0
         id_card_img_mask[:, 0:int(norm_width*0.05)] = 0
         id_card_img_mask[:, int(norm_width*0.95):] = 0
 
+        remove_noise.do(id_card_img_mask)
+
+#        se1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+#        se2 = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+#        mask = cv2.morphologyEx(id_card_img_mask, cv2.MORPH_CLOSE, se1)
+#        id_card_img_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, se2)
+#  
         ## remove right head profile
         left_half_id_card_img_mask = np.copy(id_card_img_mask)
         left_half_id_card_img_mask[:, norm_width/2:] = 0
@@ -34,6 +46,7 @@ class Segmentation(object):
         ## Try to find text lines and chars
         horizontal_sum = np.sum(left_half_id_card_img_mask, axis=1)
         line_ranges = extract_peek_ranges_from_array(horizontal_sum)
+
         return len(line_ranges) >= 5 and len(line_ranges) <= 7
 
 
@@ -60,15 +73,20 @@ class Segmentation(object):
                 break
         if best_boundary is None:
             return {}
-    
+
         boundary = best_boundary
-        
+        ## boundary = ([0, 0, 0], [100, 100, 100])
         preprocess_bg_mask = PreprocessBackgroundMask(boundary)
         id_card_img_mask = preprocess_bg_mask.do(color_img)
         id_card_img_mask[0:int(norm_height*0.05),:] = 0
         id_card_img_mask[int(norm_height*0.95): ,:] = 0
         id_card_img_mask[:, 0:int(norm_width*0.05)] = 0
         id_card_img_mask[:, int(norm_width*0.95):] = 0
+
+#        se1 = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+#        se2 = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+#        mask = cv2.morphologyEx(id_card_img_mask, cv2.MORPH_CLOSE, se1)
+#        id_card_img_mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, se2)
 
         ## remove right head profile
         left_half_id_card_img_mask = np.copy(id_card_img_mask)
