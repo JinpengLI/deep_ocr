@@ -3,6 +3,37 @@
 import cv2
 import numpy as np
 
+class PreprocessRemoveNonCharNoise(object):
+
+    def __init__(self, char_width):
+        self.min_w = char_width * 0.1
+        self.min_h = char_width * 0.1
+
+        self.min_area = char_width * char_width * 0.05
+
+        self.max_area = char_width * char_width * 2.0
+
+    def do(self, bin_img):
+        
+        tmp_bin_img = np.copy(bin_img)
+
+        if cv2.__version__[0] == "2":
+            contours, hierarchy = cv2.findContours(
+                tmp_bin_img,
+                cv2.RETR_TREE,
+                cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            _, contours, hierarchy = cv2.findContours(
+                tmp_bin_img,
+                cv2.RETR_CCOMP,
+                cv2.CHAIN_APPROX_SIMPLE)
+
+        filtered_contours = []
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            if w * h > self.max_area or w * h < self.min_area:
+                bin_img[y:y+h, x:x+w] = 0
+        contours = filtered_contours
 
 class PreprocessBackgroundMask():
     
