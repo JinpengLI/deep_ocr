@@ -10,6 +10,19 @@ def trim_string(string_data):
     string_data = "".join(list(set(string_data)))
     return string_data
 
+def merge_peek_ranges(peek_ranges, char_w):
+    new_peek_ranges = []
+    l = len(peek_ranges)
+    cur_range = peek_ranges[0]
+    for i in range(1, l):
+        if char_w > cur_range[1] - cur_range[0]:
+            cur_range = (cur_range[0], peek_ranges[i][1])
+        else:
+            new_peek_ranges.append(cur_range)
+            cur_range = peek_ranges[i]
+    new_peek_ranges.append(cur_range)
+    return new_peek_ranges
+    
 
 def extract_peek_ranges_from_array(array_vals, minimun_val=10, minimun_range=2):
     start_i = None

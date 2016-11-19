@@ -16,6 +16,7 @@ from deep_ocr.cv2_img_proc import PreprocessCropZeros
 from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatioFillBG
 from deep_ocr.id_cards.char_set import CharSet
 from deep_ocr.utils import extract_peek_ranges_from_array
+from deep_ocr.utils import merge_peek_ranges
 from deep_ocr.id_cards.segmentation import Segmentation
 
 import numpy as np
@@ -23,24 +24,31 @@ import numpy as np
 
 class RecoTextLine(object):
     def __init__(self, caffe_cls,
-                 norm_width,
-                 norm_height,
+                 caffe_cls_width,
+                 caffe_cls_height,
+                 page_w=500,
                  char_set=set(),
                  debug_path=None):
         self.caffe_cls = caffe_cls
         self.char_set = char_set
-        self.norm_width = norm_width
-        self.norm_height = norm_height
+        self.caffe_cls_width = caffe_cls_width
+        self.caffe_cls_height = caffe_cls_height
         self.debug_path = debug_path
+        self.page_w = page_w
 
     def do(self, img_line):
         height = img_line.shape[0]
         vertical_sum = np.sum(img_line, axis=0)
-        peek_ranges = extract_peek_ranges_from_array(vertical_sum)
+        char_w = self.page_w * self.char_set["width"]
+        ## first segmentation
+        peek_ranges = extract_peek_ranges_from_array(vertical_sum,
+                                                     minimun_val=10,
+                                                     minimun_range=2)
+        peek_ranges = merge_peek_ranges(peek_ranges, char_w)
         char_imgs = []
         crop_zeros = PreprocessCropZeros()
         resize_keep_ratio = PreprocessResizeKeepRatioFillBG(
-            self.norm_width, self.norm_height,
+            self.caffe_cls_width, self.caffe_cls_height,
             fill_bg=False, margin=4)
         for i, peek_range in enumerate(peek_ranges):
             x = peek_range[0]
@@ -55,13 +63,17 @@ class RecoTextLine(object):
         output_tag_to_max_proba = self.caffe_cls.predict_cv2_imgs(np_char_imgs)
         ocr_res = ""
         for item in output_tag_to_max_proba:
-            if len(self.char_set) > 0:
+            if len(self.char_set["set"]) > 0:
                 for char_p in item:
-                    if char_p[0] in self.char_set:
+                    if char_p[0] in self.char_set["set"]:
                         ocr_res += char_p[0]
                         break
             else:
                 ocr_res += item[0][0]
+        ## end end segmenetation
+
+
+
         print(ocr_res.encode("utf-8"))
         if self.debug_path is not None:
             path_debug_image_line = self.debug_path+"_line.jpg"
@@ -150,9 +162,8 @@ if __name__ == "__main__":
     char_set_data = char_set.get()
 
     reco_text_line = RecoTextLine(caffe_cls=cls_sim,
-                                  char_set=set(),
-                                  norm_width=64,
-                                  norm_height=64)
+                                  caffe_cls_width=64,
+                                  caffe_cls_height=64)
     key_ocr_res = {}
     for key in key_to_segmentation:
         key_ocr_res[key] = []
