@@ -65,3 +65,26 @@ class CaffeCls(object):
             output_tag_to_max_proba += \
                 self._predict_cv2_imgs_sub(cv2_imgs, i, pos_end)
         return output_tag_to_max_proba
+
+
+class CaffeClsBuilder(object):
+
+    def __init__(self,):
+        pass
+
+    def build(self,
+              cls_dir,
+              is_mode_cpu=True,
+              width=64,
+              height=64):
+        model_def = os.path.join(cls_dir, "model_def.prototxt")
+        model_weights = os.path.join(cls_dir, "model_weights.caffemodel")
+        y_tag_json_path = os.path.join(cls_dir, "y_tag.json")
+        return CaffeCls(
+                 model_def=model_def,
+                 model_weights=model_weights,
+                 y_tag_json_path=y_tag_json_path,
+                 is_mode_cpu=is_mode_cpu,
+                 width=width,
+                 height=height)
+        
