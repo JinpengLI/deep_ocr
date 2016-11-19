@@ -1,0 +1,175 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+
+import argparse
+from argparse import RawTextHelpFormatter
+import os
+import shutil
+import cv2
+from deep_ocr.caffe_clf import CaffeClsBuilder
+from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatio
+from deep_ocr.cv2_img_proc import PreprocessBackgroundMask
+from deep_ocr.cv2_img_proc import PreprocessCropZeros
+from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatioFillBG
+from deep_ocr.id_cards.char_set import CharSet
+from deep_ocr.utils import extract_peek_ranges_from_array
+from deep_ocr.id_cards.segmentation import Segmentation
+
+import numpy as np
+
+
+class RecoTextLine(object):
+    def __init__(self, caffe_cls,
+                 norm_width,
+                 norm_height,
+                 char_set=set(),
+                 debug_path=None):
+        self.caffe_cls = caffe_cls
+        self.char_set = char_set
+        self.norm_width = norm_width
+        self.norm_height = norm_height
+        self.debug_path = debug_path
+
+    def do(self, img_line):
+        height = img_line.shape[0]
+        vertical_sum = np.sum(img_line, axis=0)
+        peek_ranges = extract_peek_ranges_from_array(vertical_sum)
+        char_imgs = []
+        crop_zeros = PreprocessCropZeros()
+        resize_keep_ratio = PreprocessResizeKeepRatioFillBG(
+            self.norm_width, self.norm_height,
+            fill_bg=False, margin=4)
+        for i, peek_range in enumerate(peek_ranges):
+            x = peek_range[0]
+            y = 0
+            w = peek_range[1] - x
+            h = height
+            char_img = img_line[y:y+h+1, x:x+w+1]
+            char_img = crop_zeros.do(char_img)
+            char_img = resize_keep_ratio.do(char_img)
+            char_imgs.append(char_img)
+        np_char_imgs = np.asarray(char_imgs)
+        output_tag_to_max_proba = self.caffe_cls.predict_cv2_imgs(np_char_imgs)
+        ocr_res = ""
+        for item in output_tag_to_max_proba:
+            if len(self.char_set) > 0:
+                for char_p in item:
+                    if char_p[0] in self.char_set:
+                        ocr_res += char_p[0]
+                        break
+            else:
+                ocr_res += item[0][0]
+        print(ocr_res.encode("utf-8"))
+        if self.debug_path is not None:
+            path_debug_image_line = self.debug_path+"_line.jpg"
+            debug_img_line = np.copy(img_line)
+            for peek_range in peek_ranges:
+                x = peek_range[0]
+                y = 0
+                w = peek_range[1] - x
+                h = height
+                cv2.rectangle(debug_img_line,
+                              (x, y),
+                              (x+w+1, y+h+1),
+                              (255,255,255))
+            cv2.imwrite(path_debug_image_line, debug_img_line)
+        return ocr_res
+
+if __name__ == "__main__":
+
+    description = '''
+        # Docker config
+        CAFFE_MODEL=/opt/deep_ocr/data/trained_models/mnist_model
+        DEEP_OCR_ROOT=/opt/deep_ocr
+        WORKSPACE=/workspace
+
+        # PC
+        CAFFE_MODEL=/root/data/deep_ocr_trained_models/mnist_model
+        DEEP_OCR_ROOT=/root/workspace/deep_ocr
+        WORKSPACE=/root/data/deep_ocr_workspace
+
+        deep_ocr_id_card_reco --img $DEEP_OCR_ROOT/data/id_card_img.jpg \
+            --debug_path /tmp/debug \
+            --cls_sim ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64 \
+            --cls_ua ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64
+
+        deep_ocr_id_card_reco --img ~/data/id_card_front \
+            --debug_path /tmp/debug \
+            --cls_sim ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64 \
+            --cls_ua ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64
+    '''
+
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--img', dest='img',
+                        default=None, required=True,
+                        help='id card image to reco')
+    parser.add_argument('--debug_path', dest='debug_path',
+                        default=None, required=False,
+                        help='debug path')
+    parser.add_argument('--cls_sim', dest='cls_sim',
+                        default=None, required=False,
+                        help='cls sim')
+    parser.add_argument('--cls_ua', dest='cls_ua',
+                        default=None, required=False,
+                        help='cls ua')
+
+    options = parser.parse_args()
+    path_img = os.path.expanduser(options.img)
+    debug_path = os.path.expanduser(options.debug_path)
+    if debug_path is not None:
+        if os.path.isdir(debug_path):
+            shutil.rmtree(debug_path)
+        os.makedirs(debug_path)
+
+    cls_dir_sim = os.path.expanduser(options.cls_sim)
+    cls_dir_ua = os.path.expanduser(options.cls_ua)
+
+    caffe_cls_builder = CaffeClsBuilder()
+    cls_sim = caffe_cls_builder.build(cls_dir=cls_dir_sim,)
+
+    seg_norm_width = 600
+    seg_norm_height = 600
+    preprocess_resize = PreprocessResizeKeepRatio(
+        seg_norm_width, seg_norm_height)
+    id_card_img = cv2.imread(path_img)
+    preprocess_resize = PreprocessResizeKeepRatio(
+        seg_norm_width, seg_norm_height)
+    id_card_img = preprocess_resize.do(id_card_img)    
+    segmentation = Segmentation(debug_path)
+    key_to_segmentation = segmentation.do(id_card_img)
+
+    boundary = ([0, 0, 0], [100, 100, 100])
+    preprocess_bg_mask = PreprocessBackgroundMask(boundary)
+    id_card_img_mask = preprocess_bg_mask.do(id_card_img)
+
+    char_set = CharSet()
+    char_set_data = char_set.get()
+
+    reco_text_line = RecoTextLine(caffe_cls=cls_sim,
+                                  char_set=set(),
+                                  norm_width=64,
+                                  norm_height=64)
+    key_ocr_res = {}
+    for key in key_to_segmentation:
+        key_ocr_res[key] = []
+        print("="*64)
+        print(key)
+        for i, segment in enumerate(key_to_segmentation[key]):
+            x, y, w, h = segment
+            img_line = id_card_img_mask[y:y+h+1, x:x+w+1]
+            if debug_path is not None:
+                line_debug_path = "key_%s_%i" % (key, i)
+                line_debug_path = os.path.join(debug_path, line_debug_path)
+                reco_text_line.debug_path = line_debug_path
+            reco_text_line.char_set = char_set_data[key]
+            ocr_res = reco_text_line.do(img_line)
+            key_ocr_res[key].append(ocr_res)
+
+    if debug_path is not None:
+        path_debug_image_mask = os.path.join(
+            debug_path, "reco_debug_01_image_mask.jpg")
+        cv2.imwrite(path_debug_image_mask, id_card_img_mask)
