@@ -5,13 +5,13 @@ import cv2
 from deep_ocr.cv2_img_proc import PreprocessCropZeros
 from deep_ocr.cv2_img_proc import PreprocessResizeKeepRatioFillBG
 from deep_ocr.utils import extract_peek_ranges_from_array
-from deep_ocr.utils import merge_peek_ranges
+from deep_ocr.utils import merge_peek_ranges_mini_non_digits
 
 class RectImageClassifier(object):
-    def __init__(self, caffe_cls, image, char_set,
+    def __init__(self, caffe_cls, bin_image, char_set,
                  caffe_cls_width=64, caffe_cls_height=64):
         self.caffe_cls = caffe_cls
-        self.image = image
+        self.bin_image = bin_image
         self.cache_res = {}
         self.char_set = char_set
         self.caffe_cls_width = caffe_cls_width
@@ -23,7 +23,7 @@ class RectImageClassifier(object):
             key = (rect, boundary)
             if key not in self.cache_res:
                 rects_to_reco.append(rect)
-        image = self.image
+        image = self.bin_image
         char_imgs = []
         crop_zeros = PreprocessCropZeros()
         resize_keep_ratio = PreprocessResizeKeepRatioFillBG(
@@ -54,64 +54,69 @@ class RectImageClassifier(object):
         return ocr_res
 
 
-
 class RecoTextLine(object):
-    def __init__(self, caffe_cls,
-                 caffe_cls_width,
-                 caffe_cls_height,
-                 page_w=500,
-                 char_set=set(),
-                 debug_path=None,
-                 boundary=(0,0,0)):
-        self.caffe_cls = caffe_cls
+    def __init__(self, rect_img_clf,
+                 char_set=None,
+                 debug_path=None):
         self.char_set = char_set
-        self.caffe_cls_width = caffe_cls_width
-        self.caffe_cls_height = caffe_cls_height
         self.debug_path = debug_path
-        self.page_w = page_w
-        self.boundary = boundary
+        self.rect_img_clf = rect_img_clf
 
-    def do(self, img_line):
-        rect_img_clf = RectImageClassifier(
-            self.caffe_cls,
-            img_line,
-            self.char_set,
-            caffe_cls_width=self.caffe_cls_width,
-            caffe_cls_height=self.caffe_cls_height)
+    def convert_peek_ranges_into_rects(self,
+                                       peek_ranges,
+                                       line_rect):
+        base_x, base_y, base_w, base_h = line_rect
+        rects = []
+        for peek_range in peek_ranges:
+            x = base_x + peek_range[0]
+            y = base_y
+            w = peek_range[1] - peek_range[0]
+            h = base_h
+            rect = (x, y, w, h)
+            rects.append(rect)
+        return rects
 
-        height = img_line.shape[0]
-        vertical_sum = np.sum(img_line, axis=0)
-        char_w = self.page_w * self.char_set["width"]
+    def do(self, bin_image, line_rect, boundary):
+        self.rect_img_clf.bin_image = bin_image
+        x, y, w, h = line_rect
+        page_w = bin_image.shape[1]
+        img_line = bin_image[y: y + h, x: x + w]
+        char_w = page_w * self.char_set["width"]
+        ocr_res = None
         ## first segmentation
+        vertical_sum = np.sum(img_line, axis=0)
         peek_ranges = extract_peek_ranges_from_array(
             vertical_sum,
             minimun_val=10,
             minimun_range=2)
+        rects = self.convert_peek_ranges_into_rects(
+            peek_ranges, line_rect)
 
-        peek_ranges = merge_peek_ranges(peek_ranges, char_w)
-        rects = []
-        for peek_range in peek_ranges:
-            x = peek_range[0]
-            y = 0
-            w = peek_range[1] - x
-            h = height
-            rect = (x, y, w, h)
-            rects.append(rect)
-        ocr_res = rect_img_clf.do(rects, self.boundary)
+        self.rect_img_clf.char_set = self.char_set
+        ocr_res = self.rect_img_clf.do(rects, boundary)
+        if ocr_res is not None:
+            print("before merge..")
+            print(ocr_res.encode("utf-8"))
+            peek_ranges = merge_peek_ranges_mini_non_digits(
+                peek_ranges, char_w, ocr_res)
+            rects = self.convert_peek_ranges_into_rects(
+                peek_ranges, line_rect)
+            ocr_res = self.rect_img_clf.do(rects, boundary)
+            print("after merge...")
+            print(ocr_res.encode("utf-8"))
 
         ## end end segmenetation
-        print(ocr_res.encode("utf-8"))
         if self.debug_path is not None:
             path_debug_image_line = self.debug_path+"_line.jpg"
-            debug_img_line = np.copy(img_line)
-            for peek_range in peek_ranges:
-                x = peek_range[0]
-                y = 0
-                w = peek_range[1] - x
-                h = height
+            debug_img_line = np.copy(bin_image)
+            for rect in rects:
+                x = rect[0]
+                y = rect[1]
+                w = rect[2]
+                h = rect[3]
                 cv2.rectangle(debug_img_line,
                               (x, y),
-                              (x+w+1, y+h+1),
+                              (x + w, y + h),
                               (255,255,255))
             cv2.imwrite(path_debug_image_line, debug_img_line)
         return ocr_res

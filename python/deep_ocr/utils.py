@@ -22,7 +22,26 @@ def merge_peek_ranges(peek_ranges, char_w):
             cur_range = peek_ranges[i]
     new_peek_ranges.append(cur_range)
     return new_peek_ranges
-    
+
+def merge_peek_ranges_mini_non_digits(peek_ranges, char_w, ocr_res):
+    digits = u"0123456789"
+    i = 0
+    n = len(peek_ranges)
+    new_peek_ranges = []
+    while i < n:
+        peek_range = peek_ranges[i]
+        x = peek_range[0]
+        w = peek_range[1] - x
+        j = 1
+        while w < char_w and (i + j) < n and \
+                (ocr_res[i+j-1] not in digits) and \
+                (ocr_res[i+j] not in digits) :
+            w = peek_ranges[i+j][1] - x
+            j += 1
+        new_peek_ranges.append((x, x+w))
+        i += j
+    return new_peek_ranges
+
 
 def extract_peek_ranges_from_array(array_vals, minimun_val=10, minimun_range=2):
     start_i = None
@@ -31,6 +50,13 @@ def extract_peek_ranges_from_array(array_vals, minimun_val=10, minimun_range=2):
     for i, val in enumerate(array_vals):
         if val > minimun_val and start_i is None:
             start_i = i
+        elif val > minimun_val and i == (len(array_vals) - 1) \
+                and start_i is not None:
+            end_i = i
+            if end_i - start_i >= minimun_range:
+                peek_ranges.append((start_i, end_i))
+            start_i = None
+            end_i = None
         elif val > minimun_val and start_i is not None:
             pass
         elif val < minimun_val and start_i is not None:

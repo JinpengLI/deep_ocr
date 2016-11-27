@@ -14,6 +14,8 @@ from deep_ocr.cv2_img_proc import PreprocessBackgroundMask
 from deep_ocr.id_cards.segmentation import Segmentation
 from deep_ocr.id_cards.char_set import CharSet
 from deep_ocr.reco_text_line import RecoTextLine
+from deep_ocr.reco_text_line import RectImageClassifier
+
 
 
 if __name__ == "__main__":
@@ -74,36 +76,38 @@ if __name__ == "__main__":
     preprocess_resize = PreprocessResizeKeepRatio(
         seg_norm_width, seg_norm_height)
     id_card_img = cv2.imread(path_img)
-    preprocess_resize = PreprocessResizeKeepRatio(
-        seg_norm_width, seg_norm_height)
     id_card_img = preprocess_resize.do(id_card_img)    
     segmentation = Segmentation(debug_path)
     key_to_segmentation = segmentation.do(id_card_img)
 
-    boundary = ([0, 0, 0], [100, 100, 100])
+    boundary = ((0, 0, 0), (100, 100, 100))
     preprocess_bg_mask = PreprocessBackgroundMask(boundary)
     id_card_img_mask = preprocess_bg_mask.do(id_card_img)
 
     char_set = CharSet()
     char_set_data = char_set.get()
 
-    reco_text_line = RecoTextLine(caffe_cls=cls_sim,
-                                  caffe_cls_width=64,
-                                  caffe_cls_height=64)
+    rect_img_clf = RectImageClassifier(
+        cls_sim,
+        id_card_img_mask,
+        char_set,
+        caffe_cls_width=64,
+        caffe_cls_height=64)
+
+    reco_text_line = RecoTextLine(rect_img_clf)
+
     key_ocr_res = {}
     for key in key_to_segmentation:
         key_ocr_res[key] = []
         print("="*64)
         print(key)
         for i, segment in enumerate(key_to_segmentation[key]):
-            x, y, w, h = segment
-            img_line = id_card_img_mask[y:y+h+1, x:x+w+1]
             if debug_path is not None:
                 line_debug_path = "key_%s_%i" % (key, i)
                 line_debug_path = os.path.join(debug_path, line_debug_path)
                 reco_text_line.debug_path = line_debug_path
             reco_text_line.char_set = char_set_data[key]
-            ocr_res = reco_text_line.do(img_line)
+            ocr_res = reco_text_line.do(id_card_img_mask, segment, boundary)
             key_ocr_res[key].append(ocr_res)
 
     if debug_path is not None:

@@ -9,11 +9,11 @@ class CharSet(object):
         self.data = {}
         self.data["name"] = {
                 "set": set(sim_data) - set(digit_data),
-                "width": 0.04
+                "width": 0.030
         }
         self.data["sex"] = {
                 "set": set(u"男女"),
-                "width": 0.04
+                "width": 0.030
         }
         self.data["minzu"] = {
                 "set": set(
@@ -23,7 +23,7 @@ class CharSet(object):
             u"普米塔吉克怒俄罗斯鄂温克德昂保安裕固京"\
             u"塔塔尔独龙鄂伦春赫哲乌孜别克门巴珞巴"\
             u"基诺高山穿青人"),
-            "width": 0.04
+            "width": 0.030
         }
         self.data["year"] = {
             "set": set("0123456789"),
@@ -38,8 +38,8 @@ class CharSet(object):
             "width": 0.015
         }
         self.data["address"] = {
-            "set": set(sim_data),
-            "width": 0.035
+            "set": set(sim_data).union(digit_data),
+            "width": 0.030
         }
         self.data["id"] = {
             "set": set(u"0123456789X"),
