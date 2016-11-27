@@ -68,6 +68,8 @@ docker pull jinpengli/deep_ocr_cpu_docker:latest
 
 ```
 docker run -ti --volume=${HOME}/deep_ocr_workspace:/workspace jinpengli/deep_ocr_cpu_docker:latest /bin/bash
+cd /opt/deep_ocr
+git pull origin master
 ```
 
 volume用于mount到container里面，这样可以获取上面的识别结果。
