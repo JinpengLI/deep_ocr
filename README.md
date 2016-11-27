@@ -94,7 +94,7 @@ python /opt/deep_ocr/reco_chars.py
 
 ```
 export WORKSPACE=/workspace
-deep_ocr_id_card_reco --img $DEEP_OCR_ROOT/data/id_card_img.jpg             --debug_path /tmp/debug             --cls_sim ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64             --cls_ua ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64
+deep_ocr_id_card_reco --img $DEEP_OCR_ROOT/data/id_card_img.jpg             --debug_path /tmp/debug             --cls_sim ${WORKSPACE}/data/chongdata_caffe_cn_sim_digits_64_64             --cls_ua ${WORKSPACE}/data/chongdata_train_ualpha_digits_64_64
 ```
 
 识别结果：
@@ -111,19 +111,19 @@ address
 紫禁城敬事房
 ============================================================
 month
-02
+12
 ============================================================
 minzu
 汉
 ============================================================
 year
-0654
+1654
 ============================================================
 sex
 男
 ============================================================
 id
-102044065402202430
+1X21441114X221243X
 ============================================================
 day
 20
