@@ -70,6 +70,8 @@ if __name__ == "__main__":
 
     caffe_cls_builder = CaffeClsBuilder()
     cls_sim = caffe_cls_builder.build(cls_dir=cls_dir_sim,)
+    cls_ua = caffe_cls_builder.build(cls_dir=cls_dir_ua,)
+    caffe_classifiers = {"sim": cls_sim, "ua": cls_ua}
 
     seg_norm_width = 600
     seg_norm_height = 600
@@ -80,16 +82,21 @@ if __name__ == "__main__":
     segmentation = Segmentation(debug_path)
     key_to_segmentation = segmentation.do(id_card_img)
 
-    boundary = ((0, 0, 0), (100, 100, 100))
-    preprocess_bg_mask = PreprocessBackgroundMask(boundary)
-    id_card_img_mask = preprocess_bg_mask.do(id_card_img)
+    boundaries = [
+        ((0, 0, 0), (100, 100, 100)),
+    ]
+    boundary2binimgs = []
+    for boundary in boundaries:
+        preprocess_bg_mask = PreprocessBackgroundMask(boundary)
+        id_card_img_mask = preprocess_bg_mask.do(id_card_img)
+        boundary2binimgs.append((boundary, id_card_img_mask))
 
     char_set = CharSet()
     char_set_data = char_set.get()
 
     rect_img_clf = RectImageClassifier(
-        cls_sim,
-        id_card_img_mask,
+        None,
+        None,
         char_set,
         caffe_cls_width=64,
         caffe_cls_height=64)
@@ -107,8 +114,16 @@ if __name__ == "__main__":
                 line_debug_path = os.path.join(debug_path, line_debug_path)
                 reco_text_line.debug_path = line_debug_path
             reco_text_line.char_set = char_set_data[key]
-            ocr_res = reco_text_line.do(id_card_img_mask, segment, boundary)
+            caffe_cls = caffe_classifiers[
+                char_set_data[key]["caffe_cls"]]
+            ocr_res = reco_text_line.do(boundary2binimgs, segment, caffe_cls)
             key_ocr_res[key].append(ocr_res)
+    print("ocr res:")
+    for key in key_ocr_res:
+        print("="*60)
+        print(key)
+        for res_i in key_ocr_res[key]:
+            print(res_i.encode("utf-8"))
 
     if debug_path is not None:
         path_debug_image_mask = os.path.join(

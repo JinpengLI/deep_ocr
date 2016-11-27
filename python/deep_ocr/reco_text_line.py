@@ -17,7 +17,7 @@ class RectImageClassifier(object):
         self.caffe_cls_width = caffe_cls_width
         self.caffe_cls_height = caffe_cls_height
 
-    def do(self, rects, boundary):
+    def _do(self, rects, boundary):
         rects_to_reco = []
         for rect in rects:
             key = (rect, boundary)
@@ -43,17 +43,44 @@ class RectImageClassifier(object):
             if len(self.char_set["set"]) > 0:
                 for char_p in item:
                     if char_p[0] in self.char_set["set"]:
-                        self.cache_res[key] = char_p[0]
+                        self.cache_res[key] = char_p
                         break
             else:
-                self.cache_res[key] = item[0][0]
+                self.cache_res[key] = item[0]
+
+    def do(self, rects, boundary):
+        self._do(rects, boundary)
         ocr_res = ""
         for rect in rects:
             key = (rect, boundary)
-            ocr_res += self.cache_res[key]
+            ocr_res += self.cache_res[key][0]
         return ocr_res
 
+    def do_images_maxproba(self, rects, boundaries, bin_images):
+        size = len(boundaries)
+        ## generate cache
+        for i in range(size):
+            boundary = boundaries[i]
+            bin_image = bin_images[i]
+            self.bin_image = bin_image
+            self._do(rects, boundary)
 
+        mat_proba = []
+        for rect in rects:
+            row_probabilities = []
+            for i in range(size):
+                boundary = boundaries[i]
+                key = (rect, boundary)
+                row_probabilities.append(self.cache_res[key])
+            mat_proba.append(row_probabilities)
+
+        ocr_res = ""
+        n = len(mat_proba)
+        for i in range(n):
+            mat_proba[i] = sorted(mat_proba[i], key=lambda x: -x[1])
+            ocr_res += mat_proba[i][0][0]
+        return ocr_res
+    
 class RecoTextLine(object):
     def __init__(self, rect_img_clf,
                  char_set=None,
@@ -61,6 +88,7 @@ class RecoTextLine(object):
         self.char_set = char_set
         self.debug_path = debug_path
         self.rect_img_clf = rect_img_clf
+
 
     def convert_peek_ranges_into_rects(self,
                                        peek_ranges,
@@ -76,8 +104,15 @@ class RecoTextLine(object):
             rects.append(rect)
         return rects
 
-    def do(self, bin_image, line_rect, boundary):
-        self.rect_img_clf.bin_image = bin_image
+    def do(self, boundary2binimgs, line_rect, caffe_cls):
+        boundaries, bin_images = [], []
+        for boundary, bin_image in boundary2binimgs:
+            boundaries.append(boundary)
+            bin_images.append(bin_image)
+        
+        bin_image = bin_images[-1]
+        self.rect_img_clf.caffe_cls = caffe_cls
+        self.rect_img_clf.bin_image = None
         x, y, w, h = line_rect
         page_w = bin_image.shape[1]
         img_line = bin_image[y: y + h, x: x + w]
@@ -89,11 +124,12 @@ class RecoTextLine(object):
             vertical_sum,
             minimun_val=10,
             minimun_range=2)
+
         rects = self.convert_peek_ranges_into_rects(
             peek_ranges, line_rect)
-
         self.rect_img_clf.char_set = self.char_set
-        ocr_res = self.rect_img_clf.do(rects, boundary)
+        ocr_res = self.rect_img_clf.do_images_maxproba(
+            rects, boundaries, bin_images)
         if ocr_res is not None:
             print("before merge..")
             print(ocr_res.encode("utf-8"))
@@ -101,22 +137,23 @@ class RecoTextLine(object):
                 peek_ranges, char_w, ocr_res)
             rects = self.convert_peek_ranges_into_rects(
                 peek_ranges, line_rect)
-            ocr_res = self.rect_img_clf.do(rects, boundary)
+            ocr_res = self.rect_img_clf.do_images_maxproba(
+                rects, boundaries, bin_images)
             print("after merge...")
             print(ocr_res.encode("utf-8"))
 
-        ## end end segmenetation
-        if self.debug_path is not None:
-            path_debug_image_line = self.debug_path+"_line.jpg"
-            debug_img_line = np.copy(bin_image)
-            for rect in rects:
-                x = rect[0]
-                y = rect[1]
-                w = rect[2]
-                h = rect[3]
-                cv2.rectangle(debug_img_line,
-                              (x, y),
-                              (x + w, y + h),
-                              (255,255,255))
-            cv2.imwrite(path_debug_image_line, debug_img_line)
+#        ## end end segmenetation
+#        if self.debug_path is not None:
+#            path_debug_image_line = self.debug_path+"_line.jpg"
+#            debug_img_line = np.copy(bin_image)
+#            for rect in rects:
+#                x = rect[0]
+#                y = rect[1]
+#                w = rect[2]
+#                h = rect[3]
+#                cv2.rectangle(debug_img_line,
+#                              (x, y),
+#                              (x + w, y + h),
+#                              (255,255,255))
+#            cv2.imwrite(path_debug_image_line, debug_img_line)
         return ocr_res

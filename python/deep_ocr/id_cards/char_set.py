@@ -9,11 +9,13 @@ class CharSet(object):
         self.data = {}
         self.data["name"] = {
                 "set": set(sim_data) - set(digit_data),
-                "width": 0.030
+                "width": 0.030,
+                "caffe_cls": "sim",
         }
         self.data["sex"] = {
                 "set": set(u"男女"),
-                "width": 0.030
+                "width": 0.030,
+                "caffe_cls": "sim",
         }
         self.data["minzu"] = {
                 "set": set(
@@ -23,27 +25,33 @@ class CharSet(object):
             u"普米塔吉克怒俄罗斯鄂温克德昂保安裕固京"\
             u"塔塔尔独龙鄂伦春赫哲乌孜别克门巴珞巴"\
             u"基诺高山穿青人"),
-            "width": 0.030
+            "width": 0.030,
+            "caffe_cls": "sim",
         }
         self.data["year"] = {
             "set": set("0123456789"),
-            "width": 0.015
+            "width": 0.015,
+            "caffe_cls": "ua",
         }
         self.data["month"] = {
             "set": set("0123456789"),
-            "width": 0.015
+            "width": 0.015,
+            "caffe_cls": "ua",
         }
         self.data["day"] = {
             "set": set("0123456789"),
-            "width": 0.015
+            "width": 0.015,
+            "caffe_cls": "ua",
         }
         self.data["address"] = {
             "set": set(sim_data).union(digit_data),
-            "width": 0.030
+            "width": 0.030,
+            "caffe_cls": "sim",
         }
         self.data["id"] = {
             "set": set(u"0123456789X"),
-            "width": 0.02
+            "width": 0.02,
+            "caffe_cls": "ua",
         }
 
     def get(self):
