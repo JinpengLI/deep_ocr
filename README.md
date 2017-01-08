@@ -49,10 +49,11 @@ http://cs231n.stanford.edu/reports/zyh_project.pdf
 https://www.docker.com/
 ```
 
-下载deep_ocr_workspace.zip (http://pan.baidu.com/s/1jIfThu2 和 http://pan.baidu.com/s/1miyLROO )，解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
+下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1nvz2wrB 和 https://pan.baidu.com/s/1qYPKH3Y )，解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
 
 ```
-unzip deep_ocr_workspace.zip -d ~/
+cat deep_ocr_workspace.z* > unsplit_deep_ocr_workspace.zip
+unzip unsplit_deep_ocr_workspace.zip -d ~/
 ```
 
 这个zip包含deep_ocr所有需要数据文件（由于太大了，所以放百度云了）。所有数据到解压到 `~/deep_ocr_workspace`，你也可以把需要处理的数据放到这个文件夹。
