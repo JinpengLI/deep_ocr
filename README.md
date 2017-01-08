@@ -49,7 +49,18 @@ http://cs231n.stanford.edu/reports/zyh_project.pdf
 https://www.docker.com/
 ```
 
-下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1nvz2wrB 和 https://pan.baidu.com/s/1qYPKH3Y )，解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
+下载deep_ocr_workspace.zip (https://pan.baidu.com/s/1nvz2wrB 和 https://pan.baidu.com/s/1qYPKH3Y )
+
+两个文件的md5sum值，用于校验文件是否成功下载。
+
+```
+$ md5sum deep_ocr_workspace.zip
+ffeda7ea6604e7b8835c05a33fa0459e  deep_ocr_workspace.zip
+$ md5sum deep_ocr_workspace.z01
+ea66796c2bbdb2bec9b7ee28eb44012d  deep_ocr_workspace.z01
+```
+
+解压到本地硬盘，譬如到以下地方 (~/deep_ocr_workspace)
 
 ```
 cat deep_ocr_workspace.z* > unsplit_deep_ocr_workspace.zip
