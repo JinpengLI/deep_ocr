@@ -70,13 +70,15 @@ class Font2Image(object):
         self.need_crop = need_crop
         self.margin = margin
 
-    def do(self, font_path, char, path_img):
+    def do(self, font_path, char, path_img, rotate=0):
         find_image_bbox = FindImageBBox()
         img = Image.new("RGB", (self.width, self.height), "black")
         draw = ImageDraw.Draw(img)
         font = ImageFont.truetype(font_path, int(self.width * 0.7),)
         draw.text((0, 0), char, (255, 255, 255),
                   font=font)
+        if rotate != 0:
+            img = img.rotate(rotate)
         data = list(img.getdata())
         sum_val = 0
         for i_data in data:
@@ -101,18 +103,32 @@ class Font2Image(object):
 
 
 if __name__ == "__main__":
-    lang_chars_gen = LangCharsGenerate("digits+eng")
-    lang_chars = lang_chars_gen.do()
-    font_check = FontCheck(lang_chars)
-
-    font_dir = "/root/workspace/deep_ocr_fonts/chinese_fonts/"
-    for font_name in os.listdir(font_dir):
-        font_path = os.path.join(font_dir, font_name)
-        print("font_path:", font_path)
-        lang_chars_gen = LangCharsGenerate("chi_sim")
-        lang_chars = lang_chars_gen.do()
-        print("char len=", len(lang_chars))
-        #print(lang_chars.encode("utf-8"))
-        font_check = FontCheck(lang_chars)
-        print("can cover all the chars?:", font_check.do(font_path))
+    ### test FontCheck
+    #lang_chars_gen = LangCharsGenerate("digits+eng")
+    #lang_chars = lang_chars_gen.do()
+    #font_check = FontCheck(lang_chars)
+    #font_dir = "~/workspace/deep_ocr_fonts/chinese_fonts/"
+    #font_dir = os.path.expanduser(font_dir)
+    #for font_name in os.listdir(font_dir):
+    #    font_path = os.path.join(font_dir, font_name)
+    #    print("font_path:", font_path)
+    #    lang_chars_gen = LangCharsGenerate("chi_sim")
+    #    lang_chars = lang_chars_gen.do()
+    #    print("char len=", len(lang_chars))
+    #    #print(lang_chars.encode("utf-8"))
+    #    font_check = FontCheck(lang_chars)
+    #    print("can cover all the chars?:", font_check.do(font_path))
     
+    ### test Font2Image
+    width = 64
+    height = 64
+    need_crop = True
+    margin = 15
+    font_path = "~/workspace/deep_ocr_fonts/chinese_fonts/fangzheng_fangsong.ttf"
+    out_image = "/tmp/out.jpg"
+    font_path = os.path.expanduser(font_path)
+    font_2_image = Font2Image(
+        width=width, height=height,
+        need_crop=need_crop, margin=margin,
+    )
+    font_2_image.do(font_path=font_path, char="c", path_img=out_image, rotate=45)
