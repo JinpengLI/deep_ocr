@@ -387,7 +387,6 @@ class KerasLenetExt2Model(KerasModel):
         self.model.add(Dropout(0.5))
         self.model.add(Dense(self.max_n_label, activation='softmax'))
 
-
         # 8. Compile model
         self.model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
@@ -395,48 +394,6 @@ class KerasLenetExt2Model(KerasModel):
 
     def __repr__(self, ):
         return "KerasLenetExt2Model" + self.config_str()
-
-
-class KerasLenetExt3Model(KerasModel):
-    def __init__(self, **kwargs):
-        super(KerasLenetExt3Model, self).__init__(**kwargs)
-        norm_shape = self.norm_shape
-        self.model = Sequential()
-        self.model.add(Convolution2D(32, (3, 3), activation='relu',
-                                input_shape=(norm_shape[0], norm_shape[1], 1)))
-
-        self.model.add(Convolution2D(32, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Convolution2D(68, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Convolution2D(128, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Convolution2D(256, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Convolution2D(512, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Flatten())
-        self.model.add(Dense(1024, activation='relu'))
-        self.model.add(Dropout(0.5))
-        self.model.add(Dense(self.max_n_label, activation='softmax'))
-
-        # 8. Compile model
-        self.model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
-
-    def __repr__(self, ):
-        return "KerasLenetExt3Model" + self.config_str()
 
 
 class KerasCifar10CNN(KerasModel):
@@ -608,7 +565,7 @@ if __name__ == "__main__":
     path_train = "train.txt"
     path_test = "test.txt"
     verbose = 1
-    max_epoch_batch = 140000 ## not enough memeory on my machine
+    max_epoch_batch = 1400000 ## set it smaller when there is not enough memeory
     nrepeat = 3
     configs = [
         #{"model": KerasLenetModel, "norm_shape": (22, 22), "batch_size": 128, "nb_epoch": 150},
@@ -625,10 +582,9 @@ if __name__ == "__main__":
         #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 50, },
         #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 101, },
         #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 152, },
-        #{"model": KerasLenetExt1Model, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150,  },
-        {"model": KerasLenetExt2Model, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150,  },
+        #{"model": KerasLenetExt1Model, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150,  }, ## 0.925 on test
+        {"model": KerasLenetExt2Model, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150,  }, ## 0.94 on test
         #{"model": KerasLenetExt3Model, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150,  },
-
     ]
 
     config = tf.ConfigProto()
