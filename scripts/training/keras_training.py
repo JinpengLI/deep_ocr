@@ -7,7 +7,7 @@ Created on Sun Sep 24 18:18:36 2017
 from __future__ import division
 
 import math
-
+import copy
 import six
 import random
 from keras.models import Model
@@ -32,8 +32,6 @@ import cv2
 import keras
 
 from keras.backend.tensorflow_backend import set_session
-np.random.seed(123)  # for reproducibility
-
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, Convolution2D, MaxPooling2D
@@ -282,14 +280,14 @@ class KerasModel(object):
         self.nb_epoch = nb_epoch
 
     def fit(self, X, y):
-        early_stopping = keras.callbacks.EarlyStopping(monitor="acc")
+        early_stopping = keras.callbacks.EarlyStopping(monitor="loss")
         callbacks = [
             early_stopping
         ]
 
         self.model.fit(X, y,
                        batch_size=self.batch_size,
-                       nb_epoch=self.nb_epoch,
+                       epochs=self.nb_epoch,
                        verbose=self.verbose,
                        callbacks=callbacks)
 
@@ -329,6 +327,116 @@ class KerasLenetModel(KerasModel):
 
     def __repr__(self, ):
         return "KerasLenetMode" + self.config_str()
+
+
+class KerasLenetExt1Model(KerasModel):
+    def __init__(self, **kwargs):
+        super(KerasLenetExt1Model, self).__init__(**kwargs)
+        norm_shape = self.norm_shape
+        self.model = Sequential()
+        self.model.add(Convolution2D(64, (3, 3), activation='relu',
+                                input_shape=(norm_shape[0], norm_shape[1], 1)))
+
+        self.model.add(Convolution2D(64, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(128, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(256, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Flatten())
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(self.max_n_label, activation='softmax'))
+
+        # 8. Compile model
+        self.model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+    def __repr__(self, ):
+        return "KerasLenetExt1Model" + self.config_str()
+
+class KerasLenetExt2Model(KerasModel):
+    def __init__(self, **kwargs):
+        super(KerasLenetExt2Model, self).__init__(**kwargs)
+        norm_shape = self.norm_shape
+        self.model = Sequential()
+        self.model.add(Convolution2D(64, (3, 3), activation='relu',
+                                input_shape=(norm_shape[0], norm_shape[1], 1)))
+
+        self.model.add(Convolution2D(64, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(128, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(256, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Flatten())
+        self.model.add(Dense(2048, activation='relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(self.max_n_label, activation='softmax'))
+
+
+        # 8. Compile model
+        self.model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+    def __repr__(self, ):
+        return "KerasLenetExt2Model" + self.config_str()
+
+
+class KerasLenetExt3Model(KerasModel):
+    def __init__(self, **kwargs):
+        super(KerasLenetExt3Model, self).__init__(**kwargs)
+        norm_shape = self.norm_shape
+        self.model = Sequential()
+        self.model.add(Convolution2D(32, (3, 3), activation='relu',
+                                input_shape=(norm_shape[0], norm_shape[1], 1)))
+
+        self.model.add(Convolution2D(32, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(68, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(128, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(256, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Convolution2D(512, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
+
+        self.model.add(Flatten())
+        self.model.add(Dense(1024, activation='relu'))
+        self.model.add(Dropout(0.5))
+        self.model.add(Dense(self.max_n_label, activation='softmax'))
+
+        # 8. Compile model
+        self.model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+    def __repr__(self, ):
+        return "KerasLenetExt3Model" + self.config_str()
 
 
 class KerasCifar10CNN(KerasModel):
@@ -434,17 +542,36 @@ class KerasVGG16(KerasModel):
 
 class KerasResNet(KerasModel):
     def __init__(self, **kwargs):
+        self.nw_type = kwargs.get("nw_type", 18)
+        if "nw_type" in kwargs:
+            kwargs.pop("nw_type")
         super(KerasResNet, self).__init__(**kwargs)
         norm_shape = self.norm_shape
         nb_classes = self.max_n_label
-        model = ResnetBuilder.build_resnet_18(
-            (norm_shape[0], norm_shape[1], 1), nb_classes)
+        if self.nw_type == 18:
+            model = ResnetBuilder.build_resnet_18(
+                (norm_shape[0], norm_shape[1], 1), nb_classes)
+        elif self.nw_type == 34:
+            model = ResnetBuilder.build_resnet_34(
+                (norm_shape[0], norm_shape[1], 1), nb_classes)
+        elif self.nw_type == 50:
+            model = ResnetBuilder.build_resnet_50(
+                (norm_shape[0], norm_shape[1], 1), nb_classes)
+        elif self.nw_type == 101:
+            model = ResnetBuilder.build_resnet_101(
+                (norm_shape[0], norm_shape[1], 1), nb_classes)
+        elif self.nw_type == 152:
+            model = ResnetBuilder.build_resnet_152(
+                (norm_shape[0], norm_shape[1], 1), nb_classes)
+        else:
+            raise ValueError("unknown network.")
         model.compile(loss='categorical_crossentropy',
                       optimizer='adam',
                       metrics=['accuracy'])
         self.model = model
     def __repr__(self, ):
-        return "KerasResNet" + self.config_str()
+        return "KerasResNet" + self.config_str() \
+            + "(nw_type=" + str(self.nw_type) + ")"
 
 def load_image(image_path, norm_shape=(28, 28)):
     image = cv2.imread(image_path, 0)
@@ -469,76 +596,95 @@ def load_dataset(image_label_path, norm_shape=(28, 28)):
     labels = np.asarray(labels, dtype=np.uint8)
     return images, labels, max_n_label
 
+def generate_selected_items(max_epoch_batch, n_items):
+    if max_epoch_batch >= n_items:
+        yield range(n_items)
+        return
+    for i in range(max_epoch_batch, n_items, max_epoch_batch):
+        yield range(i - max_epoch_batch, i)
+    yield range(n_items)[-max_epoch_batch:]
 
 if __name__ == "__main__":
     path_train = "train.txt"
     path_test = "test.txt"
     verbose = 1
-    max_epoch_batch = 1000000
+    max_epoch_batch = 140000 ## not enough memeory on my machine
+    nrepeat = 3
     configs = [
-        #{"model": KerasLenetModel, "norm_shape": (22, 22), "batch_size": 128, "nb_epoch": 50},
+        #{"model": KerasLenetModel, "norm_shape": (22, 22), "batch_size": 128, "nb_epoch": 150},
         #{"model": KerasLenetModel, "norm_shape": (26, 26), "batch_size": 128, "nb_epoch": 150},
-        #{"model": KerasLenetModel, "norm_shape": (28, 28), "batch_size": 128, "nb_epoch": 50},
-        #{"model": KerasLenetModel, "norm_shape": (30, 30), "batch_size": 128, "nb_epoch": 50},
-        #{"model": KerasLenetModel, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 50},
+        #{"model": KerasLenetModel, "norm_shape": (28, 28), "batch_size": 128, "nb_epoch": 150},
+        #{"model": KerasLenetModel, "norm_shape": (30, 30), "batch_size": 128, "nb_epoch": 150},
+        #{"model": KerasLenetModel, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150},
         #{"model": KerasCifar10CNN, "norm_shape": (30, 30), "batch_size": 128, "nb_epoch": 150},
-        #{"model": KerasCifar10CNN, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 50},
         #{"model": KerasCifar10CNN, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150},
-        #{"model": KerasVGG16, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150}, ## too low
-        {"model": KerasResNet, "norm_shape": (32, 32), "batch_size": 128, "nb_epoch": 150}, ## too low
+        #{"model": KerasVGG16, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150},
+        #{"model": KerasResNet, "norm_shape": (32, 32), "batch_size": 128, "nb_epoch": 150},
+        #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 18, },
+        #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 34, },
+        #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 50, },
+        #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 101, },
+        #{"model": KerasResNet, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150, "nw_type": 152, },
+        #{"model": KerasLenetExt1Model, "norm_shape": (36, 36), "batch_size": 128, "nb_epoch": 150,  },
+        {"model": KerasLenetExt2Model, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150,  },
+        #{"model": KerasLenetExt3Model, "norm_shape": (64, 64), "batch_size": 128, "nb_epoch": 150,  },
+
     ]
 
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.45
     set_session(tf.Session(config=config))
 
-    results = []
+    results = {}
     for tune_config in configs:
-        norm_shape = tune_config["norm_shape"]
-        TuneModel = tune_config["model"]
-        tune_config.pop("model")
-        X_train, y_train, max_n_label = load_dataset(path_train, norm_shape)
-        X_test, y_test, _ = load_dataset(path_test, norm_shape)
-        # 5. Preprocess input data
-        X_train = X_train.reshape(X_train.shape[0], norm_shape[0], norm_shape[1], 1)
-        X_test = X_test.reshape(X_test.shape[0], norm_shape[0], norm_shape[1], 1)
-        tune_config["max_n_label"] = max_n_label
+        for i_repect in range(nrepeat):
+            repeat_tune_config = copy.deepcopy(tune_config)
+            norm_shape = repeat_tune_config["norm_shape"]
+            TuneModel = repeat_tune_config["model"]
+            repeat_tune_config.pop("model")
+            X_train, y_train, max_n_label = load_dataset(path_train, norm_shape)
+            X_test, y_test, _ = load_dataset(path_test, norm_shape)
+            # 5. Preprocess input data
+            X_train = X_train.reshape(X_train.shape[0], norm_shape[0], norm_shape[1], 1)
+            X_test = X_test.reshape(X_test.shape[0], norm_shape[0], norm_shape[1], 1)
+            repeat_tune_config["max_n_label"] = max_n_label
+            print("trainning data #item ", X_train.shape[0])
+            print("test data #item ", X_test.shape[0])
+            cur_model = TuneModel(**repeat_tune_config)
 
-        cur_model = TuneModel(**tune_config)
+            n_items = X_train.shape[0]
+            n_times = max(int(math.ceil(n_items/max_epoch_batch)), 1)
 
-        n_items = X_train.shape[0]
-        n_times = max(int(math.ceil(n_items/max_epoch_batch)), 1)
-        n_times = int(n_times * 1.5)
+            print("split dataset into n_times=", n_times)
+            i_times = 0
+            for seleted_items in generate_selected_items(max_epoch_batch, n_items):
+                print("="*40)
+                print("current time %d/%d" % (i_times, n_times))
+                selected_X_train = X_train[seleted_items, :]
+                selected_y_train = y_train[seleted_items]
+                # 6. Preprocess class labels
+                selected_Y_train = np_utils.to_categorical(selected_y_train, max_n_label)
+                # 9. Fit model on training data
+                cur_model.fit(selected_X_train, selected_Y_train)
+                del selected_X_train, selected_Y_train, selected_y_train
+                i_times += 1
 
-        print("split dataset into n_times=", n_times)
-        for itime in range(n_times):
-            print("="*40)
-            print("cur time %d/%d" % (itime, n_times))
-            if max_epoch_batch >= n_items:
-                seleted_items = range(n_items)
-            else:
-                seleted_items = random.sample(range(n_items), max_epoch_batch)
-
-            selected_X_train = X_train[seleted_items, :]
-            selected_y_train = y_train[seleted_items]
-
-            # 6. Preprocess class labels
-            selected_Y_train = np_utils.to_categorical(selected_y_train, max_n_label)
-
-            # 9. Fit model on training data
-            cur_model.fit(selected_X_train, selected_Y_train)
-
-        Y_test = np_utils.to_categorical(y_test, max_n_label)
-        # 10. Evaluate model on test data
-        score = cur_model.evaluate(X_test, Y_test)
-        print(repr(cur_model))
-        print("score on test:", score)
-        result_key = repr(cur_model)
-        result = score[1]
-        results.append((result_key, result))
-
-        del X_train, y_train, X_test, y_test
-
+            Y_test = np_utils.to_categorical(y_test, max_n_label)
+            # 10. Evaluate model on test data
+            score = cur_model.evaluate(X_test, Y_test)
+            print(repr(cur_model))
+            print("score on test:", score)
+            result_key = repr(cur_model)
+            if result_key not in results:
+                results[result_key] = []
+            results[result_key].append(score[1])
+            del X_train, y_train, X_test, y_test, Y_test
+            del cur_model
+    final_resuts = []
+    for result_key in results:
+        avg_res = np.average(results[result_key])
+        final_resuts.append((result_key, avg_res))
+    results = final_resuts
     results = sorted(results, key=lambda x:x[1])
     for result_pair in results:
         print("config %s result: %f" % (result_pair[0], result_pair[1]))
