@@ -37,16 +37,16 @@ def estimate_local_whitelevel(image, zoom=0.5, perc=80, range=20, debug=0):
     percentage for filters, default: %(default)s
     range for filters, default: %(default)s
     '''
-    m = interpolation.zoom(image,zoom)
-    m = filters.percentile_filter(m,perc,size=(range,2))
-    m = filters.percentile_filter(m,perc,size=(2,range))
+    m = interpolation.zoom(image, zoom)
+    m = filters.percentile_filter(m, perc, size=(range, 2))
+    m = filters.percentile_filter(m, perc, size=(2, range))
     m = interpolation.zoom(m, 1.0/zoom)
     if debug > 0:
         plt.clf()
-        plt.title("interpolation m")
+        plt.title("m after remove noise")
         plt.imshow(m, vmin=0, vmax=1)
         raw_input("PRESS ANY KEY TO CONTINUE.")
-    w, h = np.minimum(np.array(image.shape),np.array(m.shape))
+    w, h = np.minimum(np.array(image.shape), np.array(m.shape))
     flat = np.clip(image[:w,:h]-m[:w,:h]+1,0,1)
     if debug > 0:
         plt.clf()
@@ -58,7 +58,8 @@ def estimate_local_whitelevel(image, zoom=0.5, perc=80, range=20, debug=0):
 def estimate_skew_angle(image, angles, debug):
     estimates = []
     for a in angles:
-        v = np.mean(interpolation.rotate(image,a,order=0,mode='constant'),axis=1)
+        v = np.mean(interpolation.rotate(image, a, order=0, mode='constant'),
+                    axis=1)
         v = np.var(v)
         estimates.append((v,a))
     if debug>0:
@@ -95,18 +96,33 @@ def estimate_thresholds(flat, bignore=0.1, escale=1.0, lo=5, hi=90, debug=0):
     hi percentile for white estimation, default: %(default)s
     '''
     d0,d1 = flat.shape
-    o0,o1 = int(bignore*d0),int(bignore*d1)
+    o0,o1 = int(bignore*d0), int(bignore*d1)
     est = flat[o0:d0-o0,o1:d1-o1]
     if escale>0:
         # by default, we use only regions that contain
         # significant variance; this makes the percentile
         # based low and high estimates more reliable
         e = escale
-        v = est-filters.gaussian_filter(est,e*20.0)
-        v = filters.gaussian_filter(v**2,e*20.0)**0.5
-        v = (v>0.3*np.amax(v))
-        v = morphology.binary_dilation(v, structure=np.ones((int(e*50),1)))
-        v = morphology.binary_dilation(v, structure=np.ones((1,int(e*50))))
+        v = est - filters.gaussian_filter(est, e*20.0)
+        if debug:
+            plt.clf()
+            plt.title("first gaussian_filter")
+            plt.imshow(v)
+            raw_input("PRESS ANY KEY TO CONTINUE.")
+        v = filters.gaussian_filter(v**2, e*20.0)**0.5
+        if debug:
+            plt.clf()
+            plt.title("second gaussian_filter")
+            plt.imshow(v)
+            raw_input("PRESS ANY KEY TO CONTINUE.")
+        v = (v > 0.3 * np.amax(v))
+        if debug:
+            plt.clf()
+            plt.title("binarization")
+            plt.imshow(v)
+            raw_input("PRESS ANY KEY TO CONTINUE.")
+        v = morphology.binary_dilation(v, structure=np.ones((int(e*50), 1)))
+        v = morphology.binary_dilation(v, structure=np.ones((1, int(e*50))))
         if debug:
             plt.clf()
             plt.title("morphology dilation")
@@ -123,19 +139,19 @@ def compute_colseps_conv(binary, csminheight, maxcolseps, scale=1.0, debug=False
     h,w = binary.shape
     # find vertical whitespace by thresholding
     smoothed = gaussian_filter(1.0 * binary, (scale, scale*0.5))
-    smoothed = uniform_filter(smoothed,(5.0*scale,1))
+    smoothed = uniform_filter(smoothed, (5.0*scale,1))
     thresh = (smoothed<np.amax(smoothed)*0.1)
     if debug:
-        debug_show(thresh, "compute_colseps_conv 1thresh")
+        debug_show(thresh, "compute_colseps_conv thresh")
     # find column edges by filtering
-    grad = gaussian_filter(1.0*binary,(scale,scale*0.5),order=(0,1))
-    grad = uniform_filter(grad,(10.0*scale,1))
+    grad = gaussian_filter(1.0*binary, (scale, scale*0.5), order=(0,1))
+    grad = uniform_filter(grad, (10.0*scale,1))
     # grad = abs(grad) # use this for finding both edges
     grad = (grad>0.5*np.amax(grad))
     if debug:
         debug_show(grad, "compute_colseps_conv grad")
     # combine edges and whitespace
-    seps = np.minimum(thresh,maximum_filter(grad,(int(scale),int(5*scale))))
+    seps = np.minimum(thresh,maximum_filter(grad, (int(scale), int(5*scale))))
     seps = maximum_filter(seps,(int(2*scale),1))
     if debug:
         debug_show(seps, "compute_colseps_conv seps")
@@ -159,7 +175,8 @@ def compute_separators_morph(binary, scale, sepwiden, maxseps):
     return vert
 
 
-def compute_colseps(binary, scale, csminheight, maxcolseps, blackseps, maxseps, sepwiden, debug=False):
+def compute_colseps(binary, scale, csminheight, maxcolseps,
+                    blackseps, maxseps, sepwiden, debug=False):
     """Computes column separators either from vertical black lines or whitespace."""
     print("considering at most %g whitespace column separators" % maxcolseps)
     colseps = compute_colseps_conv(binary=binary,
@@ -175,6 +192,7 @@ def compute_colseps(binary, scale, csminheight, maxcolseps, blackseps, maxseps, 
         # for maxseps was 2, but only when the maxseps-value is still zero
         # and not set manually to a non-zero value
         maxseps = 2
+
     if maxseps > 0:
         print("considering at most %g black column separators" % maxseps)
         seps = compute_separators_morph(binary, scale, sepwiden, maxseps)
@@ -196,7 +214,7 @@ def remove_hlines(binary, scale, maxsize=10):
     return np.array(labels!=0,'B')
 
 
-def compute_gradmaps(binary, scale, usegauss, vscale, hscale, debug=True):
+def compute_gradmaps(binary, scale, usegauss, vscale, hscale, debug=False):
     # use gradient filtering to find baselines
     boxmap = psegutils.compute_boxmap(binary,scale)
     cleaned = boxmap*binary
@@ -209,13 +227,17 @@ def compute_gradmaps(binary, scale, usegauss, vscale, hscale, debug=True):
                                             order=(1,0))
     else:
         # this uses non-Gaussian oriented filters
-        grad = gaussian_filter(1.0*cleaned,(max(4, vscale*0.3*scale),
-                                            hscale*scale),order=(1,0))
+        grad = gaussian_filter(1.0*cleaned, (max(4, vscale*0.3*scale),
+                                            hscale*scale ), order=(1,0))
         grad = uniform_filter(grad, (vscale, hscale*6*scale))
-
+    if debug:
+        debug_show(grad, "compute_gradmaps grad")
     bottom = ocrolib.norm_max((grad<0)*(-grad))
     top = ocrolib.norm_max((grad>0)*grad)
-    return bottom,top,boxmap
+    if debug:
+        debug_show(bottom, "compute_gradmaps bottom")
+        debug_show(top, "compute_gradmaps top")
+    return bottom, top, boxmap
 
 
 def compute_line_seeds(binary, bottom, top, colseps, threshold, vscale, scale, debug=False):
@@ -224,15 +246,15 @@ def compute_line_seeds(binary, bottom, top, colseps, threshold, vscale, scale, d
     as a line seed."""
     t = threshold
     vrange = int(vscale*scale)
-    bmarked = maximum_filter(bottom==maximum_filter(bottom,(vrange,0)),(2,2))
+    bmarked = maximum_filter(bottom==maximum_filter(bottom, (vrange, 0)),(2,2))
     bmarked = bmarked*(bottom>t*np.amax(bottom)*t)*(1-colseps)
     tmarked = maximum_filter(top==maximum_filter(top,(vrange,0)),(2,2))
     tmarked = tmarked*(top>t*np.amax(top)*t/2)*(1-colseps)
     tmarked = maximum_filter(tmarked,(1,20))
-    seeds = np.zeros(binary.shape,'i')
+    seeds = np.zeros(binary.shape, 'i')
     delta = max(3,int(scale/2))
     for x in range(bmarked.shape[1]):
-        transitions = sorted([(y,1) for y in np.where(bmarked[:,x])[0]]+[(y,0) for y in np.where(tmarked[:,x][0])])[::-1]
+        transitions = sorted([(y, 1) for y in np.where(bmarked[:,x])[0]]+[(y,0) for y in np.where(tmarked[:,x][0])])[::-1]
         transitions += [(0,0)]
         for l in range(len(transitions)-1):
             y0,s0 = transitions[l]
@@ -291,7 +313,7 @@ def compute_segmentation(binary, scale,
     # spread the text line seeds to all the remaining
     # components
     if verbose: print("propagating labels")
-    llabels = morph.propagate_labels(boxmap,seeds,conflict=0)
+    llabels = morph.propagate_labels(boxmap, seeds, conflict=0)
     if verbose: print("spreading labels")
     spread = morph.spread_labels(seeds,maxdist=scale)
     llabels = np.where(llabels>0,llabels,spread*binary)
