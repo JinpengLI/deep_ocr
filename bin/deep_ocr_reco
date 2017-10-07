@@ -1,0 +1,230 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct  6 11:19:54 2017
+
+@author: jinpeng.li
+"""
+
+from __future__ import print_function
+
+import argparse
+from argparse import RawTextHelpFormatter
+
+import matplotlib.pyplot as plt
+import deep_ocr.ocrolib as ocrolib
+from deep_ocr.ocrolib_ext import normalize_raw_image
+from deep_ocr.ocrolib_ext import estimate_local_whitelevel
+from deep_ocr.ocrolib_ext import estimate_skew
+from deep_ocr.ocrolib_ext import estimate_thresholds
+from deep_ocr.ocrolib_ext import compute_segmentation
+from deep_ocr.ocrolib import psegutils, morph, sl
+
+import numpy as np
+
+def show_img(image, title="debug"):
+    plt.ion()
+    plt.gray()
+    plt.title(title)
+    plt.imshow(image)
+    plt.show()
+    raw_input("PRESS ANY KEY TO CONTINUE.")
+
+
+if __name__ == "__main__":
+    description = '''
+        A general recognition program
+    '''
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('image', help='image to recognize')
+    parser.add_argument('--verbose', '-v',
+                        dest='verbose', action='store_true')
+    parser.add_argument('--debug', '-d',
+                        dest='debug', action='store_true')
+
+    ### Step 1. binarization parameters
+    parser.add_argument('--gray',
+                        dest='gray', action='store_true')
+    parser.add_argument('-z','--zoom',
+                        type=float,
+                        default=0.5,
+                        help='zoom for page background estimation, smaller=faster, default: %(default)s')
+    parser.add_argument('-p', '--perc',
+                        type=float,
+                        default=80,
+                        help='percentage for filters, default: %(default)s')
+    parser.add_argument('-r', '--range',
+                        type=int, default=20,
+                        help='range for filters, default: %(default)s')
+    parser.add_argument('--bignore',
+                        type=float, default=0.1,
+                        help='ignore this much of the border for threshold estimation, default: %(default)s')
+    parser.add_argument('-m','--maxskew',
+                        type=float, default=2,
+                        help='skew angle estimation parameters (degrees), default: %(default)s')
+    parser.add_argument('--skewsteps',
+                        type=int, default=8,
+                        help='steps for skew angle estimation (per degree), default: %(default)s')
+    parser.add_argument('--lo',
+                        type=float, default=5,
+                        help='percentile for black estimation, default: %(default)s')
+    parser.add_argument('--hi',
+                        type=float, default=90,
+                        help='percentile for white estimation, default: %(default)s')
+    parser.add_argument('-e', '--escale',
+                        type=float, default=1.0,
+                        help='scale for estimating a mask over the text region, default: %(default)s')
+    parser.add_argument('--light_threshold',
+                        type=float, default=0.5,
+                        help='threshold, determines lightness, default: %(default)s')
+
+    ### Step 2. Page segmentation
+    # error checking
+    group_error_checking = parser.add_argument_group('error checking')
+    # limits
+    group_error_checking.add_argument('--minscale',type=float,default=12.0,
+                        help='minimum scale permitted, default: %(default)s')
+    group_error_checking.add_argument('--maxlines',type=float,default=300,
+                        help='maximum # lines permitted, default: %(default)s')
+
+    # scale parameters
+    group_scale = parser.add_argument_group('scale parameters')
+    group_scale.add_argument('--scale',type=float,default=0.0,
+                        help='the basic scale of the document (roughly, xheight) 0=automatic, default: %(default)s')
+    group_scale.add_argument('--hscale',type=float,default=1.0,
+                        help='non-standard scaling of horizontal parameters, default: %(default)s')
+    group_scale.add_argument('--vscale',type=float,default=1.0,
+                        help='non-standard scaling of vertical parameters, default: %(default)s')
+
+    # line parameters
+    group_line = parser.add_argument_group('line parameters')
+    group_line.add_argument('--page_seg_threshold',type=float,default=0.2,
+                        help='baseline threshold, default: %(default)s')
+    group_line.add_argument('--noise',type=int,default=8,
+                        help="noise threshold for removing small components from lines, default: %(default)s")
+    group_line.add_argument('--usegauss',action='store_true',
+                        help='use gaussian instead of uniform, default: %(default)s')
+
+    # column parameters
+    group_column = parser.add_argument_group('column parameters')
+    group_column.add_argument('--maxseps',type=int,default=0,
+                        help='maximum black column separators, default: %(default)s')
+    group_column.add_argument('--sepwiden',type=int,default=10,
+                        help='widen black separators (to account for warping), default: %(default)s')
+    # Obsolete parameter for 'also check for black column separators'
+    # which can now be triggered simply by a positive maxseps value.
+    group_column.add_argument('--blackseps',action="store_true",
+                        help=argparse.SUPPRESS)
+
+    # whitespace column separators
+    group_column.add_argument('--maxcolseps',type=int,default=3,
+                        help='maximum # whitespace column separators, default: %(default)s')
+    group_column.add_argument('--csminheight',type=float,default=10,
+                        help='minimum column height (units=scale), default: %(default)s')
+
+
+    parser.set_defaults(verbose=False)
+    parser.set_defaults(debug=False)
+    parser.set_defaults(gray=False)
+
+    options = parser.parse_args()
+    if options.verbose:
+        print("! image to reco:", options.image)
+    path_image = options.image
+
+    raw = ocrolib.read_image_gray(path_image)
+    if options.debug:
+        show_img(raw, title="raw image")
+
+    ##############################################################
+    ## Step 1 binarize image from ocropus
+    ##############################################################
+    image = normalize_raw_image(raw)
+    if options.debug:
+        show_img(image, title="normalized image")
+
+    # check whether the image is already effectively binarized
+    if options.gray:
+        extreme = 0
+    else:
+        extreme = (np.sum(image<0.05)+np.sum(image>0.95))*1.0/np.prod(image.shape)
+    if extreme>0.95:
+        comment = "no-normalization"
+        flat = image
+    else:
+        if options.verbose:
+            print("! flatten image")
+        comment = ""
+        # if not, we need to flatten it by estimating the local whitelevel
+        flat = estimate_local_whitelevel(image,
+                                         options.zoom,
+                                         options.perc,
+                                         options.range,
+                                         options.debug)
+
+    if options.verbose:
+        print("estimate skew angle and rotate")
+    # estimate skew angle and rotate
+    if options.maxskew > 0:
+        flat, angle = estimate_skew(flat,
+                                    options.bignore,
+                                    options.maxskew,
+                                    options.skewsteps,
+                                    debug=options.debug)
+    else:
+        angle = 0
+
+    lo, hi = estimate_thresholds(flat,
+                                 options.bignore, options.escale,
+                                 options.lo, options.hi, options.debug)
+    if options.verbose:
+        print("estimate_thresholds lo %f and hi %f" % (lo, hi))
+
+    print("%s lo-hi (%.2f %.2f) angle %4.1f %s" % (path_image, lo, hi, angle, comment))
+    flat -= lo
+    flat /= (hi-lo)
+    flat = np.clip(flat,0,1)
+    if options.debug:
+        plt.clf()
+        plt.title("flat image again")
+        plt.imshow(flat,vmin=0,vmax=1)
+        raw_input("PRESS ANY KEY TO CONTINUE.")
+
+    binary = 1*(flat>options.light_threshold)
+    if options.debug:
+        plt.clf()
+        plt.title("binary image")
+        plt.gray()
+        plt.imshow(binary)
+        raw_input("PRESS ANY KEY TO CONTINUE.")
+
+    binary = 1 - binary # invert
+    if options.scale==0:
+        scale = psegutils.estimate_scale(binary)
+    else:
+        scale = options.scale
+
+    if options.verbose:
+        print("scale=", scale)
+    if np.isnan(scale) or scale>1000.0:
+        raise ValueError("bad scale (%g); skipping" % scale)
+    if scale < options.minscale:
+        raise ValueError("scale (%g) less than --minscale; skipping\n" % scale)
+
+    ##############################################################
+    ### Step 2: Text line segmentation
+    ##############################################################
+
+    segmentation = compute_segmentation(binary, scale,
+                                        maxcolseps=options.maxcolseps,
+                                        blackseps=options.blackseps,
+                                        csminheight=options.csminheight,
+                                        maxseps=options.maxseps,
+                                        sepwiden=options.sepwiden,
+                                        usegauss=options.usegauss,
+                                        hscale=options.hscale,
+                                        vscale=options.vscale,
+                                        threshold=options.page_seg_threshold,
+                                        debug=options.debug,
+                                        verbose=options.verbose)

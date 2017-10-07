@@ -33,8 +33,8 @@ from numpy import (amax, amin, argmax, arange, array, clip, concatenate, dot,
 from pylab import (clf, cm, figure, ginput, imshow, newaxis, rand, subplot,
                    where)
 from collections import defaultdict
-from ocrolib.exceptions import RecognitionError
-from ocrolib.edist import levenshtein
+from deep_ocr.ocrolib.exceptions import RecognitionError
+from deep_ocr.ocrolib.edist import levenshtein
 import nutils
 import unicodedata
 from scipy.ndimage import measurements,filters

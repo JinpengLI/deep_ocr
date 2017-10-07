@@ -1,4 +1,4 @@
-from ocrolib.native import *
+from deep_ocr.ocrolib.native import *
 
 lstm_utils = r"""
 #include <math.h>

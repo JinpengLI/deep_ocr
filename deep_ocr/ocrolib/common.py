@@ -14,7 +14,7 @@ import unicodedata
 import inspect
 import glob
 import cPickle
-from ocrolib.exceptions import (BadClassLabel, BadInput, FileNotFound,
+from deep_ocr.ocrolib.exceptions import (BadClassLabel, BadInput, FileNotFound,
                                 OcropusException)
 
 import numpy
@@ -605,7 +605,7 @@ def ocropus_find_file(fname, gz=True):
         * current working directory
         * ../../../../share/ocropus from this file's install location
         * `/usr/local/share/ocropus`
-        * `$PREFIX/share/ocropus` ($PREFIX being the Python installation 
+        * `$PREFIX/share/ocropus` ($PREFIX being the Python installation
            prefix, usually `/usr`)
     """
     possible_prefixes = []
