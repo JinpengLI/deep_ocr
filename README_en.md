@@ -16,5 +16,5 @@ cd ~/deep_ocr && python setup.py install
 For a simple recognition test, you can launch the below command.
 
 ```
-cd ~/deep_ocr && ./bin/deep_ocr_reco data/holiday_notification.jpg -v -d
+source ~/deep_ocr_env/bin/activate && cd ~/deep_ocr && ./bin/deep_ocr_reco data/holiday_notification.jpg -v -d
 ```

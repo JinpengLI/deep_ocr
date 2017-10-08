@@ -2,7 +2,7 @@
 deep ocr
 --------
 
-See README_en.md for English installation documentation.
+See (README_en.md)[README_en.md] for English installation documentation.
 
 只在ubuntu下面测试通过，需要virtualenv安装，安装路径可自行调整：
 
@@ -17,7 +17,7 @@ cd ~/deep_ocr && python setup.py install
 测试
 
 ```
-cd ~/deep_ocr && ./bin/deep_ocr_reco data/holiday_notification.jpg -v -d
+source ~/deep_ocr_env/bin/activate && cd ~/deep_ocr && ./bin/deep_ocr_reco data/holiday_notification.jpg -v -d
 ```
 
 
