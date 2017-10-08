@@ -2,14 +2,37 @@
 deep ocr
 --------
 
+See README_en.md for English installation documentation.
+
+只在ubuntu下面测试通过，需要virtualenv安装，安装路径可自行调整：
+
+```
+git clone https://github.com/JinpengLI/deep_ocr.git ~/deep_ocr
+virtualenv ~/deep_ocr_env
+source ~/deep_ocr_env/bin/activate
+pip install -r ~/deep_ocr/requirements.txt
+cd ~/deep_ocr && python setup.py install
+```
+
+测试
+
+```
+cd ~/deep_ocr && ./bin/deep_ocr_reco data/holiday_notification.jpg -v -d
+```
+
+
+旧版说明
+--------
+
+部分还能用，暂时保留，以后准备删除.
 
 估计很多开发员使用tesseract做中文识别，但是结果不是一般的差，譬如下面的图片
 
-![alt text](https://github.com/JinpengLI/deep_ocr/blob/master/test_data.png "需要识别文本")
+![alt text](https://github.com/JinpengLI/deep_ocr/blob/master/data/test_data.png "需要识别文本")
 
 
 ```
-$ tesseract -l chi_sim test_data.png out_test_data
+$ tesseract -l chi_sim data/test_data.png out_test_data
 ```
 
 ```
@@ -37,7 +60,8 @@ $ python reco_chars.py
 ```
 Deep Convolutional Network for Handwritten Chinese Character Recognition
 
-http://cs231n.stanford.edu/reports/zyh_project.pdf
+http://yuhao.im/files/Zhang_CNNChar.pdf
+
 ```
 
 通过 Docker 安装
