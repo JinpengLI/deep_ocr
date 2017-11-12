@@ -1,0 +1,96 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+import os
+import argparse
+from argparse import RawTextHelpFormatter
+import glob
+import fnmatch
+from random import shuffle
+
+
+
+if __name__ == "__main__":
+
+    description = '''
+        deep_ocr_make_ocropus_dataset --font_dir \
+            /home/jl237561/workspace/deep_ocr_fonts/chinese_fonts --out \
+            /home/jl237561/data/out_chinese_dataset \
+            --input /home/jl237561/workspace/chinese_text_dataset
+    '''
+
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=RawTextHelpFormatter)
+    parser.add_argument('--out', dest='out',
+                        default=None, required=True,
+                        help='output directory')
+    parser.add_argument('--input', dest='input',
+                        default=None, required=True,
+                        help='input directory which contains all the text files')
+    parser.add_argument('--font_dir', dest='font_dir',
+                        default=None, required=True,
+                        help='directory which contains font files')
+    options = parser.parse_args()
+
+    test_ratio = 0.3
+    training_dir = os.path.join(options.out, "training")
+    test_dir = os.path.join(options.out, "test")
+
+    if not os.path.isdir(training_dir):
+        os.makedirs(training_dir)
+    if not os.path.isdir(test_dir):
+        os.makedirs(test_dir)
+    
+
+    text_files = []
+    for root, dirnames, filenames in os.walk(options.input):
+        for filename in fnmatch.filter(filenames, '*.txt'):
+            text_files.append(os.path.join(root, filename))
+
+    shuffle(text_files)
+    sep_training = int(len(text_files) * (1.0 - test_ratio))
+    training_text_files = text_files[ : sep_training]
+    test_text_files = text_files[sep_training:]
+    
+
+    font_files = []
+    for root, dirnames, filenames in os.walk(options.font_dir):
+        for filename in filenames:
+            if filename.lower().endswith(".ttf") or filename.lower().endswith(".otf") :
+                font_files.append(os.path.join(root, filename))
+    
+    
+    path_font_list_files = "/tmp/fonts.txt"
+    fout = open(path_font_list_files, "w+")
+    fout.write("\n".join(font_files))
+    fout.close()
+
+    path_training_text_files = "/tmp/text_training_files.txt"
+    fout = open(path_training_text_files, "w+")
+    fout.write("\n".join(training_text_files))
+    fout.close()
+
+    path_test_text_files = "/tmp/text_test_files.txt"
+    fout = open(path_test_text_files, "w+")
+    fout.write("\n".join(test_text_files))
+    fout.close()
+    
+    cmd = "ocropus-linegen -T %(path_text_files)s -F %(path_font_list_files)s -o %(out_dir)s"
+    cmd = cmd % {
+        "path_text_files": path_training_text_files,
+        "path_font_list_files": path_font_list_files,
+        "out_dir": training_dir,
+    }
+    print(cmd)
+    #os.system(cmd)
+
+    cmd = "ocropus-linegen -T %(path_text_files)s -F %(path_font_list_files)s -o %(out_dir)s"
+    cmd = cmd % {
+        "path_text_files": path_test_text_files,
+        "path_font_list_files": path_font_list_files,
+        "out_dir": test_dir,
+    }
+    print(cmd)
+    #os.system(cmd)
